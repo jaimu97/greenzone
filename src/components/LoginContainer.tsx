@@ -3,20 +3,6 @@ import {IonList, IonItem, IonInput, IonButton, IonText} from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './LoginContainer.css';
 
-/*
-  Sources:
-  https://legacy.reactjs.org/docs/hooks-state.html
-  https://ionicframework.com/docs/react/navigation#ionpage
-  https://ionicframework.com/docs/api/title#headings
-  https://ionicframework.com/docs/api/input
-  https://ionicframework.com/docs/api/button
-  https://ionicframework.com/docs/api/button#theming
-  https://ionicframework.com/docs/api/text
-  https://ionicframework.com/docs/layout/css-utilities#flex-container-properties
-  https://ionicframework.com/docs/react/quickstart#a-look-at-a-react-component
-
-*/
-
 const LoginContainer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

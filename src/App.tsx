@@ -11,9 +11,14 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { home, locate, map } from 'ionicons/icons';
-import Tab1 from './pages/Tab1';
+
+/* TODO: Delete this section once the tabs are re-created */
+// import Tab1 from './pages/Tab1';
 import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
+/* END TODO */
+import HomeTab from "./pages/tabs/HomeTab";
+
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 
@@ -64,8 +69,8 @@ const App: React.FC = () => (
         <Route path="/tabs">
           <IonTabs>
             <IonRouterOutlet>
-              <Route exact path="/tabs/tab1">
-                <Tab1 />
+              <Route exact path="/tabs/home">
+                <HomeTab />
               </Route>
               <Route exact path="/tabs/tab2">
                 <Tab2 />
@@ -74,13 +79,13 @@ const App: React.FC = () => (
                 <Tab3 />
               </Route>
               <Route exact path="/tabs">
-                <Redirect to="/tabs/tab1" />
+                <Redirect to="/tabs/home" />
               </Route>
             </IonRouterOutlet>
             <IonTabBar slot="bottom">
-              <IonTabButton tab="tab1" href="/tabs/tab1">
+              <IonTabButton tab="home" href="/tabs/home">
                 <IonIcon aria-hidden="true" icon={home} />
-                <IonLabel>Tab 1</IonLabel>
+                <IonLabel>Home</IonLabel>
               </IonTabButton>
               <IonTabButton tab="tab2" href="/tabs/tab2">
                 <IonIcon aria-hidden="true" icon={map} />

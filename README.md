@@ -20,3 +20,19 @@ If you're project folder is called `ionic` then you clone this project inside of
 
 Then, you should be able to `cd` into the folder and run `ionic serve` and it'll start a localhost server that you can 
 access. Changes made will automatically update on the page it opens. 
+
+<br>
+
+# Sources:
+
+For reference later or pages I've *borrowed* code from.
+
+https://legacy.reactjs.org/docs/hooks-state.html
+https://ionicframework.com/docs/react/navigation#ionpage
+https://ionicframework.com/docs/api/title#headings
+https://ionicframework.com/docs/api/input
+https://ionicframework.com/docs/api/button
+https://ionicframework.com/docs/api/button#theming
+https://ionicframework.com/docs/api/text
+https://ionicframework.com/docs/layout/css-utilities#flex-container-properties
+https://ionicframework.com/docs/react/quickstart#a-look-at-a-react-component
