@@ -1,0 +1,8 @@
+.button-container {
+  width: 75%;
+  margin: 0 auto;
+}
+
+.button-container ion-button {
+  width: 100%;
+}

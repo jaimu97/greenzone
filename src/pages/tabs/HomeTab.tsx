@@ -2,7 +2,7 @@ import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/rea
 import HomeContainer from '../../components/tabs/HomeContainer';
 import './HomeTab.css';
 
-const Tab1: React.FC = () => {
+const HomeTab: React.FC = () => {
   return (
     <IonPage>
       <IonHeader>
@@ -22,4 +22,4 @@ const Tab1: React.FC = () => {
   );
 };
 
-export default Tab1;
+export default HomeTab;

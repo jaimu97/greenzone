@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {IonList, IonItem, IonInput, IonButton, IonText} from '@ionic/react';
+import {IonList, IonItem, IonInput, IonButton, IonText, IonToast} from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './LoginContainer.css';
 
@@ -58,7 +58,8 @@ const SignupContainer: React.FC = () => {
       </IonList>
       <div className="ion-text-center ion-margin-top">
         <IonButton type="button" color="secondary" className="ion-margin-end" onClick={handleLoginClick}>Login</IonButton>
-        <IonButton type="submit" color="primary" onClick={handleLoginClick}>Create Account</IonButton>
+        <IonButton id="open-toast" type="submit" color="primary" onClick={handleCreationClick}>Create Account</IonButton>
+        <IonToast trigger="open-toast" message="Account created! Please login." duration={5000}></IonToast>
       </div>
     </form>
   );

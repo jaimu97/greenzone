@@ -12,10 +12,10 @@ const HomeContainer: React.FC = () => {
         </IonText>
       </div>
       <div className="ion-text-center ion-margin-top button-container">
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">MAP</IonButton>
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">ZONE</IonButton>
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">FEEDBACK</IonButton>
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">PLANTS</IonButton>
+        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">MAP</IonButton><br/>
+        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">ZONE</IonButton><br/>
+        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">FEEDBACK</IonButton><br/>
+        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">PLANTS</IonButton><br/>
       </div>
     </>
   );

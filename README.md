@@ -36,3 +36,5 @@ https://ionicframework.com/docs/api/button#theming
 https://ionicframework.com/docs/api/text
 https://ionicframework.com/docs/layout/css-utilities#flex-container-properties
 https://ionicframework.com/docs/react/quickstart#a-look-at-a-react-component
+https://ionicframework.com/docs/api/router
+https://ionicframework.com/docs/api/toast

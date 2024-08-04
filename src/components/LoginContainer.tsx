@@ -19,7 +19,7 @@ const LoginContainer: React.FC = () => {
   };
 
   const handleLoginClick = () => {
-    history.push('tabs/tab1'); // TODO: Needs login. Accepts anything, just takes you to the demo page.
+    history.push('tabs/home'); // TODO: Needs login. Accepts anything, just takes you to the demo page.
   };
 
   return (
