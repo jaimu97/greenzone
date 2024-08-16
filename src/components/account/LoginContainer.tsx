@@ -9,7 +9,7 @@ import {
   IonLoading
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 import './LoginContainer.css';
 
 const LoginContainer: React.FC = () => {
@@ -21,18 +21,7 @@ const LoginContainer: React.FC = () => {
 
   const handleLoginClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Just stops form from being cleared when bad information is entered
-    setShowLoading(true); // For show internet users, show them something to let them know their login has been sent.
-
-    /*
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setShowLoading(false);
-
-    if (error) {
-      setShowToast(error.message);
-    } else {
-      history.push('/tabs/home');
-    }
-    */
+    setShowLoading(true); // For show internet users, show them something to let them know their account has been sent.
 
     if (!email || !password) {
     setShowToast('Please enter both email and password');
@@ -40,9 +29,9 @@ const LoginContainer: React.FC = () => {
     return;
     }
 
-    console.log('Attempting login with:', { email, password });
+    console.log('Attempting account with:', { email, password });
 
-    try { // FIXME: FUcking supabase not accepting the login.
+    try { // FIXME: FUcking supabase not accepting the account.
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       console.log('Supabase response:', { data, error });
 
@@ -64,15 +53,11 @@ const LoginContainer: React.FC = () => {
     }
   };
 
-  const handleSignUpClick = () => {
-    history.push('/signup');
-  };
-
   return (
     <form onSubmit={handleLoginClick}>
       <div className="ion-text-center">
         <IonText className="ion-margin-bottom">
-          <h1 className="bigtext">GREEN ZONE</h1>
+          <h1 className="bigtext">WELCOME BACK</h1>
         </IonText>
       </div>
       <IonList inset={true}>
@@ -93,7 +78,7 @@ const LoginContainer: React.FC = () => {
               console.log('Password input changed:', e.detail.value);
               /* trying to use an empty string to see if e.detail.value is null or undefined.
                * previously it was printing in the browser console this:
-               * "Attempting login with: {email: 'test@test.com', password: ''}"
+               * "Attempting account with: {email: 'test@test.com', password: ''}"
                * regardless of if this field had data in it and since java/typescript is fucking
                * horrific I'm not sure if it's casting a null or undefined value to '' silently or not.
                */
@@ -103,7 +88,6 @@ const LoginContainer: React.FC = () => {
         </IonItem>
       </IonList>
       <div className="ion-text-center ion-margin-top">
-        <IonButton type="button" color="secondary" className="ion-margin-end" onClick={handleSignUpClick}>Sign Up</IonButton>
         <IonButton type="submit" color="primary">Login</IonButton>
       </div>
       <IonLoading isOpen={showLoading} message="Logging in..." />

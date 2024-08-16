@@ -9,7 +9,7 @@ import {
   IonLoading
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 import './LoginContainer.css';
 
 const SignupContainer: React.FC = () => {
@@ -34,12 +34,8 @@ const SignupContainer: React.FC = () => {
     if (error) {
       setShowToast(error.message);
     } else {
-      history.push('/login');
+      history.push('/account');
     }
-  };
-
-  const handleLoginClick = () => {
-    history.push('/login');
   };
 
   return (
@@ -76,7 +72,6 @@ const SignupContainer: React.FC = () => {
         </IonItem>
       </IonList>
       <div className="ion-text-center ion-margin-top">
-        <IonButton type="button" color="secondary" className="ion-margin-end" onClick={handleLoginClick}>Login</IonButton>
         <IonButton type="submit" color="primary">Create Account</IonButton>
       </div>
       <IonLoading isOpen={showLoading} message="Creating account..." />
