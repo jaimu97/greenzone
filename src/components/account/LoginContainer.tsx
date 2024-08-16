@@ -29,7 +29,7 @@ const LoginContainer: React.FC = () => {
     return;
     }
 
-    console.log('Attempting account with:', { email, password });
+    console.log('Attempting login with:', { email, password });
 
     try { // FIXME: FUcking supabase not accepting the account.
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -78,7 +78,7 @@ const LoginContainer: React.FC = () => {
               console.log('Password input changed:', e.detail.value);
               /* trying to use an empty string to see if e.detail.value is null or undefined.
                * previously it was printing in the browser console this:
-               * "Attempting account with: {email: 'test@test.com', password: ''}"
+               * "Attempting login with: {email: 'test@test.com', password: ''}"
                * regardless of if this field had data in it and since java/typescript is fucking
                * horrific I'm not sure if it's casting a null or undefined value to '' silently or not.
                */
