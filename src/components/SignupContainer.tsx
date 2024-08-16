@@ -1,25 +1,44 @@
-import React, {useState} from 'react';
-import {IonList, IonItem, IonInput, IonButton, IonText, IonToast} from '@ionic/react';
+import React, { useState } from 'react';
+import {
+  IonList,
+  IonItem,
+  IonInput,
+  IonButton,
+  IonText,
+  IonToast,
+  IonLoading
+} from '@ionic/react';
 import { useHistory } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import './LoginContainer.css';
 
 const SignupContainer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [verify, setVerify] = useState('');
+  const [showLoading, setShowLoading] = useState(false);
+  const [showToast, setShowToast] = useState<string | undefined>(undefined);
   const history = useHistory();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Just stops form from being cleared when bad information is entered
-    console.log('Form submitted:', { email, password, verify });
-    // TODO: Figure out how to *actually* do forms in react. Pretty sure you can't just write them as html forms.
+    if (password !== verify) {
+      setShowToast('Passwords do not match');
+      return;
+    }
+
+    setShowLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
+    setShowLoading(false);
+
+    if (error) {
+      setShowToast(error.message);
+    } else {
+      history.push('/login');
+    }
   };
 
   const handleLoginClick = () => {
-    history.push('/login'); // TODO: Needs login. Accepts anything, just takes you to the demo page.
-  };
-
-  const handleCreationClick = () => {
     history.push('/login');
   };
 
@@ -30,7 +49,7 @@ const SignupContainer: React.FC = () => {
           <h1 className="bigtext">CREATE AN ACCOUNT</h1>
         </IonText>
       </div>
-      <IonList>
+      <IonList inset={true}>
         <IonItem>
           <IonInput
             label="Email"
@@ -58,9 +77,15 @@ const SignupContainer: React.FC = () => {
       </IonList>
       <div className="ion-text-center ion-margin-top">
         <IonButton type="button" color="secondary" className="ion-margin-end" onClick={handleLoginClick}>Login</IonButton>
-        <IonButton id="open-toast" type="submit" color="primary" onClick={handleCreationClick}>Create Account</IonButton>
-        <IonToast trigger="open-toast" message="Account created! Please login." duration={5000}></IonToast>
+        <IonButton type="submit" color="primary">Create Account</IonButton>
       </div>
+      <IonLoading isOpen={showLoading} message="Creating account..." />
+      <IonToast
+       isOpen={!!showToast}
+       message={showToast}
+       duration={3000}
+       onDidDismiss={() => setShowToast(undefined)}
+     />
     </form>
   );
 };
