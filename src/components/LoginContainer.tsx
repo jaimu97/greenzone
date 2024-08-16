@@ -21,7 +21,7 @@ const LoginContainer: React.FC = () => {
 
   const handleLoginClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Just stops form from being cleared when bad information is entered
-    setShowLoading(true);
+    setShowLoading(true); // For show internet users, show them something to let them know their login has been sent.
 
     /*
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -33,6 +33,15 @@ const LoginContainer: React.FC = () => {
       history.push('/tabs/home');
     }
     */
+
+    if (!email || !password) {
+    setShowToast('Please enter both email and password');
+    setShowLoading(false);
+    return;
+    }
+
+    console.log('Attempting login with:', { email, password });
+
     try { // FIXME: FUcking supabase not accepting the login.
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       console.log('Supabase response:', { data, error });
@@ -80,7 +89,16 @@ const LoginContainer: React.FC = () => {
             label="Password"
             type="password"
             value={password}
-            onIonChange={(e) => setPassword(e.detail.value!)}
+            onIonChange={(e) => {
+              console.log('Password input changed:', e.detail.value);
+              /* trying to use an empty string to see if e.detail.value is null or undefined.
+               * previously it was printing in the browser console this:
+               * "Attempting login with: {email: 'test@test.com', password: ''}"
+               * regardless of if this field had data in it and since java/typescript is fucking
+               * horrific I'm not sure if it's casting a null or undefined value to '' silently or not.
+               */
+              setPassword(e.detail.value || ''); // Works, so it was...?
+            }}
           />
         </IonItem>
       </IonList>
