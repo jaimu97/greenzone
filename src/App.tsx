@@ -53,8 +53,6 @@ import '@ionic/react/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 
-/* Icons: https://ionic.io/ionicons */
-
 setupIonicReact();
 
 const App: React.FC = () => (

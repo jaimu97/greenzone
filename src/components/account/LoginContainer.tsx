@@ -20,8 +20,11 @@ const LoginContainer: React.FC = () => {
   const history = useHistory();
 
   const handleLoginClick = async (e: React.FormEvent<HTMLFormElement>) => {
+    /* FIXME: Clicking this button works. However, trying to use the "enter" key to submit this form doesn't update the
+     *   password field and prompts the user to enter one still.
+     */
     e.preventDefault(); // Just stops form from being cleared when bad information is entered
-    setShowLoading(true); // For show internet users, show them something to let them know their account has been sent.
+    setShowLoading(true); // For slow internet users, show them something to let them know their account has been sent.
 
     if (!email || !password) {
     setShowToast('Please enter both email and password');
@@ -31,7 +34,7 @@ const LoginContainer: React.FC = () => {
 
     console.log('Attempting login with:', { email, password });
 
-    try { // FIXME: FUcking supabase not accepting the account.
+    try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       console.log('Supabase response:', { data, error });
 
@@ -76,13 +79,11 @@ const LoginContainer: React.FC = () => {
             value={password}
             onIonChange={(e) => {
               console.log('Password input changed:', e.detail.value);
-              /* trying to use an empty string to see if e.detail.value is null or undefined.
-               * previously it was printing in the browser console this:
-               * "Attempting login with: {email: 'test@test.com', password: ''}"
-               * regardless of if this field had data in it and since java/typescript is fucking
-               * horrific I'm not sure if it's casting a null or undefined value to '' silently or not.
+              /* fix because javascript/typescript was silently casting an undefined or null value to just ''
+               * and causing it to submit a blank field which would make logins always fail. Seems that explicitly
+               * setting it to blank here will ensure that doesn't happen.
                */
-              setPassword(e.detail.value || ''); // Works, so it was...?
+              setPassword(e.detail.value || '');
             }}
           />
         </IonItem>
@@ -96,7 +97,7 @@ const LoginContainer: React.FC = () => {
        message={showToast}
        duration={3000}
        onDidDismiss={() => setShowToast(undefined)} 
-     />
+      />
     </form>
   );
 };
