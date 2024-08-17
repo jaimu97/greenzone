@@ -5,19 +5,57 @@ import { supabase } from '../supabaseClient';
 
 const HomeContainer: React.FC = () => {
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  /* FIXME: Sometimes page gets stuck in perpetual loading. Not sure if this is some crazy race-condition since the
+   *  supabase server is <1ms to my PC? I can see the account details but the "Loading..." spinner is on top.
+   */
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      if (user) {
+        const { data, error } = await supabase
+          /* Feels "incorrect" to make a "SQL query" like this on the site but going off supabase's own documentation,
+           * it says to do this:
+           * https://supabase.com/docs/guides/getting-started/tutorials/with-ionic-react#account-page
+           */
+          .from('profiles')
+          .select('first_name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile: ', error);
+        } else {
+          setProfile(data);
+        }
+      }
       setLoading(false);
     };
 
     checkUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
+    // FIXME: De-duplicate this code? A lot is repeated in the block above and in AccountTab.tsx
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const currentUser = session?.user;
+      setUser(currentUser ?? null);
+      if (currentUser) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile: ', error);
+        } else {
+          setProfile(data);
+        }
+      } else {
+        setProfile(null); // If you ever see 'null' pls let me know. - Jai
+      }
     });
 
     return () => {
@@ -37,7 +75,7 @@ const HomeContainer: React.FC = () => {
         </IonText>
         {user ? (
           <IonText>
-            <h2>Hello, {user.email}</h2>
+            <h2>Hello, {profile?.first_name || user.email}</h2>
           </IonText>
         ) : (
           <IonText>

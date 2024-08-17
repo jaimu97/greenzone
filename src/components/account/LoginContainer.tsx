@@ -6,11 +6,12 @@ import {
   IonButton,
   IonText,
   IonToast,
-  IonLoading
+  IonLoading, IonIcon
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import './LoginContainer.css';
+import {lockClosedOutline, personOutline} from "ionicons/icons";
 
 const LoginContainer: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -65,6 +66,7 @@ const LoginContainer: React.FC = () => {
       </div>
       <IonList inset={true}>
         <IonItem>
+          <IonIcon icon={personOutline} slot="start" />
           <IonInput
             label="Email"
             placeholder=""
@@ -73,6 +75,7 @@ const LoginContainer: React.FC = () => {
           />
         </IonItem>
         <IonItem>
+          <IonIcon icon={lockClosedOutline} slot="start" />
           <IonInput
             label="Password"
             type="password"
