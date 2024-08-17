@@ -6,3 +6,15 @@
 .button-container ion-button {
   width: 100%;
 }
+
+.map-content {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+.map-content .leaflet-container {
+  width: 100%;
+  height: 100%;
+}
