@@ -1,5 +1,15 @@
 import './HomeContainer.css';
-import { IonButton, IonText } from "@ionic/react";
+import {
+  IonButton,
+  IonText,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonGrid,
+  IonRow,
+  IonCol
+} from "@ionic/react";
 import React, { useEffect, useState } from "react";
 import { supabase } from '../supabaseClient';
 
@@ -60,7 +70,7 @@ const HomeContainer: React.FC = () => {
 
   return (
     <>
-      <div className="ion-text-center">
+      <div className="ion-text-center home-container">
         <IonText className="ion-margin-bottom">
           <h1 className="bigtext">GREEN ZONE</h1>
         </IonText>
@@ -73,12 +83,38 @@ const HomeContainer: React.FC = () => {
             <h2>Welcome, Guest</h2>
           </IonText>
         )}
-      </div>
-      <div className="ion-text-center ion-margin-top button-container">
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">MAP</IonButton><br/>
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">ZONE</IonButton><br/>
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">FEEDBACK</IonButton><br/>
-        <IonButton className="ion-margin-bottom" type="button" color="primary" size="large">PLANTS</IonButton><br/>
+        <IonGrid>
+          <IonRow>
+            <IonCol size="12" size-md="6">
+              <IonCard className="feedback-card">
+                <img src="../../img/IMG_20160809_164508.jpg" alt="Feedback" />
+                <IonCardHeader>
+                  <IonCardTitle>Share Your Journey</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <p>Help researchers and record a journey through a green zone.</p>
+                  <IonButton expand="block" fill="solid" color="primary" className="explore-button">
+                    Start Journey
+                  </IonButton>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+            <IonCol size="12" size-md="6">
+              <IonCard className="welcome-card">
+                <img src="../../img/PXL_20240806_084907679.jpg" alt="Green Zone" />
+                <IonCardHeader>
+                  <IonCardTitle>Discover Green Zones</IonCardTitle>
+                </IonCardHeader>
+                <IonCardContent>
+                  <p>Explore active green zones near you and learn about the native flora.</p>
+                  <IonButton expand="block" fill="solid" color="primary" className="explore-button" href="/tabs/map">
+                    Explore Now
+                  </IonButton>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
       </div>
     </>
   );
