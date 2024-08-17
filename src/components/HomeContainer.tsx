@@ -1,15 +1,11 @@
 import './HomeContainer.css';
-import { IonButton, IonText, IonLoading } from "@ionic/react";
+import { IonButton, IonText } from "@ionic/react";
 import React, { useEffect, useState } from "react";
 import { supabase } from '../supabaseClient';
 
 const HomeContainer: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  /* FIXME: Sometimes page gets stuck in perpetual loading. Not sure if this is some crazy race-condition since the
-   *  supabase server is <1ms to my PC? I can see the account details but the "Loading..." spinner is on top.
-   */
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -32,7 +28,6 @@ const HomeContainer: React.FC = () => {
           setProfile(data);
         }
       }
-      setLoading(false);
     };
 
     checkUser();
@@ -62,10 +57,6 @@ const HomeContainer: React.FC = () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-
-  if (loading) {
-    return <IonLoading isOpen={true} message="Loading..." />;
-  }
 
   return (
     <>
