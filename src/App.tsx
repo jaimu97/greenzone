@@ -17,10 +17,10 @@ import { home,
 } from 'ionicons/icons';
 
 /* TODO: Delete this section once the tabs are re-created */
-import Tab2 from './pages/Tab2';
 import Tab3 from './pages/Tab3';
 /* END TODO */
 import HomeTab from "./pages/HomeTab";
+import MapTab from "./pages/MapTab";
 import AccountTab from "./pages/AccountTab"
 
 /* Core CSS required for Ionic components to work properly */
@@ -63,8 +63,8 @@ const App: React.FC = () => (
           <Route exact path="/tabs/home">
             <HomeTab />
           </Route>
-          <Route exact path="/tabs/tab2">
-            <Tab2 />
+          <Route exact path="/tabs/map">
+            <MapTab />
           </Route>
           <Route path="/tabs/tab3">
             <Tab3 />
@@ -84,9 +84,9 @@ const App: React.FC = () => (
             <IonIcon aria-hidden="true" icon={home} />
             <IonLabel>Home</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="tab2" href="/tabs/tab2">
+          <IonTabButton tab="map" href="/tabs/map">
             <IonIcon aria-hidden="true" icon={map} />
-            <IonLabel>Tab 2</IonLabel>
+            <IonLabel>Map</IonLabel>
           </IonTabButton>
           <IonTabButton tab="tab3" href="/tabs/tab3">
             <IonIcon aria-hidden="true" icon={locate} />

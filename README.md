@@ -8,6 +8,13 @@ See [here](https://nodejs.org/en) for the node,js website.
 
 Once you have node.js and npm installed, create a folder and install ionic inside of it.
 
+You should be able to run the following commands:
+
+```bash
+npm install -g @ionic/cli
+npm install @supabase/supabase-js
+```
+
 Here's a [link](https://ionicframework.com/docs/intro/cli) to their setup guide.
 
 Once ionic is installed, clone this repo into the folder where ionic is as a subdirectory.
@@ -30,3 +37,4 @@ Pages I've *borrowed* code from. (For reference later if needed)
 - https://ionic.io/ionicons
 - https://ionicframework.com/docs/components
 - https://supabase.com/docs/guides/getting-started/tutorials/with-ionic-react
+- https://dev.to/raaynaldo/javascript-datetime-111e
