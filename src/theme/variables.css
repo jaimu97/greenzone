@@ -46,6 +46,7 @@ http://ionicframework.com/docs/theming/ */
 
 .bigtext {
   font-size: 64px;
+  color: var(--ion-color-primary);
 }
 
 IonButton { /* FIXME: Doesn't stylise buttons? IDK how this framework works. */

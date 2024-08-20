@@ -1,7 +1,7 @@
 import './ContainerStyles.css';
-import { IonContent, useIonViewWillEnter } from '@ionic/react';
+import {IonContent, useIonViewWillEnter} from '@ionic/react';
 import React, { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, useMapEvents, Polygon } from "react-leaflet";
+import {MapContainer, TileLayer, useMapEvents, Polygon, FeatureGroup, Popup} from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
 
 const LeafletContainer: React.FC = () => {
@@ -94,9 +94,30 @@ const LeafletContainer: React.FC = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Polygon pathOptions={ hotZone } positions={greenZone1} />
-        <Polygon pathOptions={ coolZone } positions={greenZone2} />
-        <Polygon pathOptions={ warmZone } positions={greenZone3} />
+        <FeatureGroup>
+          <Popup>
+            <h1>This zone is hot.</h1>
+            <h2>It's like 1 billion degrees (in kelvin).</h2>
+            <p>Real data will go here once that is implemented.</p>
+          </Popup>
+          <Polygon pathOptions={ hotZone } positions={greenZone1} />
+        </FeatureGroup>
+        <FeatureGroup>
+          <Popup>
+            <h1>This zone is cool.</h1>
+            <h2>It is only -40f!</h2>
+            <p>Real data will go here once that is implemented.</p>
+          </Popup>
+          <Polygon pathOptions={ coolZone } positions={greenZone2} />
+        </FeatureGroup>
+        <FeatureGroup>
+          <Popup>
+            <h1>This zone is medium.</h1>
+            <h2>It is only 50 degrees celsius!</h2>
+            <p>Real data will go here once that is implemented.</p>
+          </Popup>
+          <Polygon pathOptions={ warmZone } positions={greenZone3} />
+        </FeatureGroup>
         <LocationLogger />
       </MapContainer>
     </IonContent>
