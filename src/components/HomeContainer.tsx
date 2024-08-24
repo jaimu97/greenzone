@@ -45,14 +45,14 @@ const HomeContainer: React.FC = () => {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      updateUserData(user);
+      await updateUserData(user);
     };
 
-    checkUser();
+    checkUser().then(r => {}); // .then is just to stop checkers annoying about promises unused.
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       const currentUser = session?.user;
-      updateUserData(currentUser ?? null); // If you ever see 'null' pls let me know. - Jai
+      await updateUserData(currentUser ?? null); // If you ever see 'null' pls let me know. - Jai
     });
 
     return () => {
