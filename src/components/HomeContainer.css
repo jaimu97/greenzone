@@ -1,2 +1,22 @@
 @import "../theme/variables.css";
 @import "ContainerStyles.css";
+
+.home-container {
+  padding: 16px;
+}
+
+.welcome-card, .feedback-card {
+  margin-top: 16px;
+  --background: var(--ion-card-background, #fff);
+}
+
+.welcome-card img, .feedback-card img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.explore-button {
+  margin-top: 16px;
+  font-size: 1.2rem;
+}
