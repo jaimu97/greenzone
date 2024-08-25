@@ -35,10 +35,9 @@ const JourneyPage: React.FC = () => {
 
   /* TODO: This randomly plots point in the green zone areas to show what it should look like.
    *   will replace this with actual data from the db once I get around to it.
-   *
-   * I have a feeling I'm a bit over my head here. No idea where the fuck to even begin...
    */
   const generateRandomPositions = (count: number) => {
+    // Roughly the bounds of the RDH campus for testing purposes.
     const minLat = -12.358300956831254;
     const maxLat = -12.351121900279576;
     const minLng = 130.87929010391238;
@@ -56,7 +55,7 @@ const JourneyPage: React.FC = () => {
     setJourneyPositions([
       generateRandomPositions(4),
       generateRandomPositions(5),
-      generateRandomPositions(10),
+      generateRandomPositions(500),
     ]);
   });
   // END TODO
