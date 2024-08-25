@@ -81,6 +81,19 @@ const AccountTab: React.FC = () => {
     return new Date(dateString).toLocaleString(); // Database returns date data as ISO 8601 time, need to format it properly.
   };
 
+  /* FIXME: I don't know what the fuck is happening but sometimes when I make changes, the profile data cache gets
+   *   all messed up and shows either just the username or a spinner (on the home page) so I'm hoping just wiping
+   *   everything will fix this.
+   */
+  const handleReset = async () => {
+    localStorage.clear();
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
+    setShowLogin(true);
+    window.location.reload();
+  };
+
   /* TODO: Replace this account data with a page that lets you edit the information and set things like a user icon?
        Right now, I am just using some of the output fields you get when you run 'select * from auth.users' in
        the supabase SQL Editor panel.
@@ -166,6 +179,18 @@ const AccountTab: React.FC = () => {
             </IonButton>
           </>
         )}
+        <br/>
+        <div className="ion-text-center ion-margin-top">
+          <h1><strong>Debug:</strong> Clears <em>everything</em>. Should fix account information not loading.</h1>
+          <IonButton
+              expand="block"
+              color="danger"
+              onClick={handleReset}
+              className="ion-margin"
+              style={{ fontSize: '5em', fontWeight: 'bold' }}>
+            UN-FUCK APP
+          </IonButton>
+        </div>
       </IonContent>
     </IonPage>
   );

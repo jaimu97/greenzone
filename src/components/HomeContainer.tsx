@@ -55,7 +55,6 @@ const HomeContainer: React.FC = () => {
       }
     };
 
-    //checkUser().then(r => {}); // .then is just to stop checkers annoying about promises unused. Might be causing issues???
     checkUser()
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
