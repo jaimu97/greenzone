@@ -14,12 +14,15 @@ import {
   IonCol,
   IonGrid,
   IonRow,
+  useIonViewWillEnter,
 } from '@ionic/react';
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
+import JourneyMap from '../components/JourneyMap';
 
 const JourneyPage: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
+  const [journeyPositions, setJourneyPositions] = useState<[number, number][][]>([]);
 
   const startJourney = () => {
     setIsRecording(true);
@@ -29,6 +32,34 @@ const JourneyPage: React.FC = () => {
     setIsRecording(false);
     // TODO: Save the journey data logic here.
   };
+
+  /* TODO: This randomly plots point in the green zone areas to show what it should look like.
+   *   will replace this with actual data from the db once I get around to it.
+   *
+   * I have a feeling I'm a bit over my head here. No idea where the fuck to even begin...
+   */
+  const generateRandomPositions = (count: number) => {
+    const minLat = -12.358300956831254;
+    const maxLat = -12.351121900279576;
+    const minLng = 130.87929010391238;
+    const maxLng = 130.885705947876;
+
+    return Array.from({ length: count }, () => [
+      // Add minimum again, or it'll end up in Papua.
+      Math.random() * (maxLat - minLat) + minLat,
+      Math.random() * (maxLng - minLng) + minLng,
+    ] as [number, number]);
+  };
+
+  useIonViewWillEnter(() => {
+    // Generate random positions for each journey
+    setJourneyPositions([
+      generateRandomPositions(4),
+      generateRandomPositions(5),
+      generateRandomPositions(10),
+    ]);
+  });
+  // END TODO
 
   return (
     <IonPage>
@@ -51,58 +82,32 @@ const JourneyPage: React.FC = () => {
               </div>
               <IonText>
                 <h2>Record a Journey</h2>
-                <IonButton onClick={startJourney}>Start Journey</IonButton>
+                <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
                 <h2>Previous Journeys</h2>
               </IonText>
               <IonGrid>
                 <IonRow>
-                  <IonCol size="12" size-md="6">
-                    <IonCard>
-                      <IonCardHeader>
-                        <IonCardTitle>Journey 1</IonCardTitle>
-                      </IonCardHeader>
-                      <IonCardContent>
-                        <p>Cards here will be populated automatically once a journey is saved.</p>
-                        <p>Information here will include information such as:</p>
-                        <ul>
-                          <li>Location</li>
-                          <li>Time</li>
-                          <li>Temperature</li>
-                          <li>Duration</li>
-                        </ul>
-                        <p>Clicking the button below will open a page dedicated to viewing the journey. Including a recreation of the path taken with leaflet.</p>
-                        <IonButton expand="block" fill="solid" color="primary">
-                          View Journey
-                        </IonButton>
-                      </IonCardContent>
-                    </IonCard>
-                  </IonCol>
-                  <IonCol size="12" size-md="6">
-                    <IonCard>
-                      <IonCardHeader>
-                        <IonCardTitle>Journey 2</IonCardTitle>
-                      </IonCardHeader>
-                      <IonCardContent>
-                        <p>Here is another card example.</p>
-                        <IonButton expand="block" fill="solid" color="primary">
-                          View Journey
-                        </IonButton>
-                      </IonCardContent>
-                    </IonCard>
-                  </IonCol>
-                  <IonCol size="12" size-md="6">
-                    <IonCard>
-                      <IonCardHeader>
-                        <IonCardTitle>Journey 3</IonCardTitle>
-                      </IonCardHeader>
-                      <IonCardContent>
-                        <p>And another.</p>
-                        <IonButton expand="block" fill="solid" color="primary">
-                          View Journey
-                        </IonButton>
-                      </IonCardContent>
-                    </IonCard>
-                  </IonCol>
+                  {journeyPositions.map((positions, index) => (
+                    <IonCol key={index} size="12" size-md="6">
+                      <IonCard>
+                        <IonCardHeader>
+                          <IonCardTitle>Journey {index + 1}</IonCardTitle>
+                        </IonCardHeader>
+                        <IonCardContent>
+                          <JourneyMap positions={positions} />
+                          <ul>
+                            <li>Location: Sample Location {index + 1}</li>
+                            <li>Time: {new Date().toLocaleString()}</li>
+                            <li>Temperature: {25 + index * 2}°C</li>
+                            <li>Duration: {20 + index * 10} minutes</li>
+                          </ul>
+                          <IonButton expand="block" fill="solid" color="primary">
+                            View Journey
+                          </IonButton>
+                        </IonCardContent>
+                      </IonCard>
+                    </IonCol>
+                  ))}
                 </IonRow>
               </IonGrid>
             </>
