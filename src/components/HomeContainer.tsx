@@ -89,7 +89,7 @@ const HomeContainer: React.FC = () => {
                 </IonCardHeader>
                 <IonCardContent>
                   <p>Help researchers and record a journey through a green zone.</p>
-                  <IonButton expand="block" fill="solid" color="primary" className="explore-button">
+                  <IonButton expand="block" fill="solid" color="primary">
                     Start Journey
                   </IonButton>
                 </IonCardContent>
@@ -103,7 +103,7 @@ const HomeContainer: React.FC = () => {
                 </IonCardHeader>
                 <IonCardContent>
                   <p>Explore active green zones near you and learn about the native flora.</p>
-                  <IonButton expand="block" fill="solid" color="primary" className="explore-button" href="/tabs/map">
+                  <IonButton expand="block" fill="solid" color="primary" href="/tabs/map">
                     Explore Now
                   </IonButton>
                 </IonCardContent>
