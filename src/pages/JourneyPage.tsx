@@ -77,6 +77,32 @@ const JourneyPage: React.FC = () => {
                       </IonCardContent>
                     </IonCard>
                   </IonCol>
+                  <IonCol size="12" size-md="6">
+                    <IonCard>
+                      <IonCardHeader>
+                        <IonCardTitle>Journey 2</IonCardTitle>
+                      </IonCardHeader>
+                      <IonCardContent>
+                        <p>Here is another card example.</p>
+                        <IonButton expand="block" fill="solid" color="primary">
+                          View Journey
+                        </IonButton>
+                      </IonCardContent>
+                    </IonCard>
+                  </IonCol>
+                  <IonCol size="12" size-md="6">
+                    <IonCard>
+                      <IonCardHeader>
+                        <IonCardTitle>Journey 3</IonCardTitle>
+                      </IonCardHeader>
+                      <IonCardContent>
+                        <p>And another.</p>
+                        <IonButton expand="block" fill="solid" color="primary">
+                          View Journey
+                        </IonButton>
+                      </IonCardContent>
+                    </IonCard>
+                  </IonCol>
                 </IonRow>
               </IonGrid>
             </>
