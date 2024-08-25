@@ -3,7 +3,7 @@
 # Kept forgetting what commands it was to update the ionic android build.
 # ionic build # Builds desktop app. THink it does it anyway with cap copy?
 ionic cap copy
-ionic cap sync
+# ionic cap sync
 
 read -p "open android studio? (y/n) " yn
 case $yn in

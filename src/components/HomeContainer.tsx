@@ -17,7 +17,6 @@ import { supabase } from '../supabaseClient';
 const HomeContainer: React.FC = () => {
   const [userData, setUserData] = useState<{user: any, profile: any} | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchUserData = async (userId: string) => {
     try {
