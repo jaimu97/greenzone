@@ -16,9 +16,13 @@ import { home,
   personCircleOutline
 } from 'ionicons/icons';
 
-/* TODO: Delete this section once the tabs are re-created */
+/* TODO: https://ionicframework.com/docs/react/platform
+ *   Change what the third tab button does depending on what platform the user is on.
+ *   For android, it should show the Journey button and give them the ability to record it.
+ *   On desktop, it should show them an overview. Possibly also an admin panel too.
+ *   (This change should also replace the icon of the button.)
+ */
 import Tab3 from './pages/Tab3';
-/* END TODO */
 import HomeTab from "./pages/HomeTab";
 import MapTab from "./pages/MapTab";
 import AccountTab from "./pages/AccountTab"
