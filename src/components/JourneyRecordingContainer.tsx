@@ -31,10 +31,12 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
     const checkAndRequestPermissions = async () => {
       try {
         const status = await Geolocation.checkPermissions();
+        console.log('Initial permission status:', status);
         setPermissionStatus(status);
 
         if (status.location !== 'granted') {
           const requestStatus = await Geolocation.requestPermissions();
+          console.log('Requested permission status:', requestStatus);
           setPermissionStatus(requestStatus);
 
           if (requestStatus.location !== 'granted') {
@@ -52,13 +54,18 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
 
     const trackLocation = async () => {
       try {
-        const position = await Geolocation.getCurrentPosition();
-        console.log('Current position:', position);
+        const options: PositionOptions = {
+          enableHighAccuracy: true,
+          timeout: 30000,
+          maximumAge: 0
+        };
+      const position = await Geolocation.getCurrentPosition(options);
+        console.log('Current position:', JSON.stringify(position));
         setCurrentPosition(position);
         setCountdown(5);
         setErrorMessage(null);
       } catch (error) {
-        console.error('Error getting location:', error);
+        console.error('Error getting location:', JSON.stringify(error));
         setErrorMessage('Failed to get current location. Please check your device settings.');
       }
     };
