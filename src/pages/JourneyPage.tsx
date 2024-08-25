@@ -16,7 +16,7 @@ import {
   IonRow,
 } from '@ionic/react';
 import './JourneyPage.css';
-import JourneyRecording from '../components/JourneyRecordingPage';
+import JourneyRecording from '../components/JourneyRecordingContainer';
 
 const JourneyPage: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
