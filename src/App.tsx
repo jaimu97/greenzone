@@ -22,7 +22,7 @@ import { home,
  *   On desktop, it should show them an overview. Possibly also an admin panel too.
  *   (This change should also replace the icon of the button.)
  */
-import Tab3 from './pages/Tab3';
+import JourneyPage from './pages/JourneyPage';
 import HomeTab from "./pages/HomeTab";
 import MapTab from "./pages/MapTab";
 import AccountTab from "./pages/AccountTab"
@@ -70,8 +70,8 @@ const App: React.FC = () => (
           <Route exact path="/tabs/map">
             <MapTab />
           </Route>
-          <Route path="/tabs/tab3">
-            <Tab3 />
+          <Route path="/tabs/journeys">
+            <JourneyPage />
           </Route>
           <Route path="/tabs/account">
             <AccountTab />
@@ -92,9 +92,9 @@ const App: React.FC = () => (
             <IonIcon aria-hidden="true" icon={map} />
             <IonLabel>Map</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="tab3" href="/tabs/tab3">
+          <IonTabButton tab="journeys" href="/tabs/journeys">
             <IonIcon aria-hidden="true" icon={locate} />
-            <IonLabel>Tab 3</IonLabel>
+            <IonLabel>Journeys</IonLabel>
           </IonTabButton>
           <IonTabButton tab="account" href="/tabs/account">
             <IonIcon aria-hidden="true" icon={personCircleOutline} />
