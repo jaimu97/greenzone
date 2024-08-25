@@ -17,19 +17,22 @@ import { supabase } from '../supabaseClient';
 const HomeContainer: React.FC = () => {
   const [userData, setUserData] = useState<{user: any, profile: any} | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUserData = async (userId: string) => {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('first_name')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
+      if (error) throw error;
+      return profile;
+    } catch (error) {
       console.error('Error fetching profile: ', error);
       return null;
     }
-    return profile;
   };
 
   const updateUserData = async (currentUser: any) => {
@@ -44,11 +47,17 @@ const HomeContainer: React.FC = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      await updateUserData(user);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await updateUserData(user);
+      } catch (error) {
+        console.error('Error checking user: ', error);
+        setLoading(false);
+      }
     };
 
-    checkUser().then(r => {}); // .then is just to stop checkers annoying about promises unused.
+    //checkUser().then(r => {}); // .then is just to stop checkers annoying about promises unused. Might be causing issues???
+    checkUser()
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       const currentUser = session?.user;
@@ -60,9 +69,15 @@ const HomeContainer: React.FC = () => {
     };
   }, []);
 
-  if (loading) {
-    return <IonSpinner />;
-  }
+  const renderWelcomeMessage = () => {
+    if (loading) {
+      return <IonSpinner />;
+    }
+    if (userData) {
+      return <h2>Hello, {userData.profile?.first_name || userData.user.email}</h2>;
+    }
+    return <h2>Welcome, Guest</h2>;
+  };
 
   return (
     <>
@@ -70,20 +85,14 @@ const HomeContainer: React.FC = () => {
         <IonText className="ion-margin-bottom">
           <h1 className="bigtext">GREEN ZONE</h1>
         </IonText>
-        {userData ? (
-          <IonText>
-            <h2>Hello, {userData.profile?.first_name || userData.user.email}</h2>
-          </IonText>
-        ) : (
-          <IonText>
-            <h2>Welcome, Guest</h2>
-          </IonText>
-        )}
+        <IonText>
+          {renderWelcomeMessage()}
+        </IonText>
         <IonGrid>
           <IonRow>
             <IonCol size="12" size-md="6">
               <IonCard className="feedback-card">
-                <img src="../../img/IMG_20160809_164508.jpg" alt="Feedback" />
+                <img src="../../img/IMG_20160809_164508.jpg" alt="Feedback"/>
                 <IonCardHeader>
                   <IonCardTitle>Share Your Journey</IonCardTitle>
                 </IonCardHeader>
@@ -97,7 +106,7 @@ const HomeContainer: React.FC = () => {
             </IonCol>
             <IonCol size="12" size-md="6">
               <IonCard className="welcome-card">
-                <img src="../../img/PXL_20240806_084907679.jpg" alt="Green Zone" />
+                <img src="../../img/PXL_20240806_084907679.jpg" alt="Green Zone"/>
                 <IonCardHeader>
                   <IonCardTitle>Discover Green Zones</IonCardTitle>
                 </IonCardHeader>
