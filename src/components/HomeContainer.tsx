@@ -73,7 +73,7 @@ const HomeContainer: React.FC<HomeContainerProps> = ({ user }) => {
                 </IonCardHeader>
                 <IonCardContent>
                   <p>Help researchers and record a journey through a green zone.</p>
-                  <IonButton expand="block" fill="solid" color="primary">
+                  <IonButton expand="block" fill="solid" color="primary" href="/tabs/journeys">
                     Start Journey
                   </IonButton>
                 </IonCardContent>
