@@ -14,65 +14,42 @@ import {
 import React, { useEffect, useState } from "react";
 import { supabase } from '../supabaseClient';
 
-const HomeContainer: React.FC = () => {
-  const [userData, setUserData] = useState<{user: any, profile: any} | null>(null);
+interface HomeContainerProps {
+  user: any;
+}
+
+const HomeContainer: React.FC<HomeContainerProps> = ({ user }) => {
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('first_name')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      return profile;
-    } catch (error) {
-      console.error('Error fetching profile: ', error);
-      return null;
-    }
-  };
-
-  const updateUserData = async (currentUser: any) => {
-    if (currentUser) {
-      const profile = await fetchUserData(currentUser.id);
-      setUserData({ user: currentUser, profile });
-    } else {
-      setUserData(null);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        await updateUserData(user);
-      } catch (error) {
-        console.error('Error checking user: ', error);
-        setLoading(false);
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('first_name')
+            .eq('id', user.id)
+            .single();
+
+          if (error) throw error;
+          setProfile(data);
+        } catch (error) {
+          console.error('Error fetching profile: ', error);
+        }
       }
+      setLoading(false);
     };
 
-    checkUser()
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user;
-      await updateUserData(currentUser ?? null); // If you ever see 'null' pls let me know. - Jai
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    fetchProfile();
+  }, [user]);
 
   const renderWelcomeMessage = () => {
     if (loading) {
       return <IonSpinner />;
     }
-    if (userData) {
-      return <h2>Hello, {userData.profile?.first_name || userData.user.email}</h2>;
+    if (user && profile) {
+      return <h2>Hello, {profile.first_name || user.email}</h2>;
     }
     return <h2>Welcome, Guest</h2>;
   };

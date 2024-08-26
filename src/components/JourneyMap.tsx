@@ -38,7 +38,7 @@ const JourneyMap: React.FC<JourneyMapProps> = ({ positions, centre }) => {
     return () => clearTimeout(timer);
   }, [key]);
 
-  const mapCenter = centre || (() => {
+  const mapCentre = centre || (() => {
     if (positions.length === 0) return [-12.35556, 130.88253]; // Default centre on RDH.
     const lats = positions.map(pos => pos[0]);
     const lngs = positions.map(pos => pos[1]);
@@ -52,7 +52,7 @@ const JourneyMap: React.FC<JourneyMapProps> = ({ positions, centre }) => {
   return (
     <MapContainer
       key={key}
-      center={mapCenter}
+      center={mapCentre}
       zoom={16}
       scrollWheelZoom={false}
       style={{ height: '300px', width: '100%' }}

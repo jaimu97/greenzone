@@ -13,61 +13,42 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonSpinner,
 } from '@ionic/react';
 import { supabase } from '../supabaseClient';
 import LoginContainer from '../components/account/LoginContainer';
 import SignupContainer from '../components/account/SignupContainer';
 
-const AccountTab: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+interface TabProps {
+  user: any;
+}
+
+const AccountTab: React.FC<TabProps> = ({ user }) => {
   const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(true);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    const fetchProfile = async () => {
       if (user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching profile: ', error);
-        } else {
+          if (error) throw error;
           setProfile(data);
+        } catch (error) {
+          console.error('Error fetching profile: ', error);
         }
       }
+      setLoading(false);
     };
 
-    checkUser();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user;
-      setUser(currentUser ?? null);
-      if (currentUser) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', currentUser.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching profile: ', error);
-        } else {
-          setProfile(data);
-        }
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    fetchProfile();
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -78,21 +59,12 @@ const AccountTab: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString(); // Database returns date data as ISO 8601 time, need to format it properly.
+    return new Date(dateString).toLocaleString();
   };
 
-  /* FIXME: I don't know what the fuck is happening but sometimes when I make changes, the profile data cache gets
-   *   all messed up and shows either just the username or a spinner (on the home page) so I'm hoping just wiping
-   *   everything will fix this.
-   */
-  const handleReset = async () => {
-    localStorage.clear();
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    setShowLogin(true);
-    window.location.reload();
-  };
+  if (loading) {
+    return <IonSpinner />;
+  }
 
   /* TODO: Replace this account data with a page that lets you edit the information and set things like a user icon?
        Right now, I am just using some of the output fields you get when you run 'select * from auth.users' in
@@ -179,18 +151,6 @@ const AccountTab: React.FC = () => {
             </IonButton>
           </>
         )}
-        <br/>
-        <div className="ion-text-center ion-margin-top">
-          <h1><strong>Debug:</strong> Clears <em>everything</em>. Should fix account information not loading.</h1>
-          <IonButton
-              expand="block"
-              color="danger"
-              onClick={handleReset}
-              className="ion-margin"
-              style={{ fontSize: '5em', fontWeight: 'bold' }}>
-            UN-FUCK APP
-          </IonButton>
-        </div>
       </IonContent>
     </IonPage>
   );
