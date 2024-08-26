@@ -12,6 +12,7 @@ import {
   IonAlert,
 } from '@ionic/react';
 import { Geolocation, Position, PermissionStatus } from '@capacitor/geolocation';
+import JourneyMap from './JourneyMap';
 
 interface JourneyRecordingProps {
   onEndJourney: () => void;
@@ -21,12 +22,12 @@ interface JourneyRecordingProps {
 
 const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney }) => {
   const [currentPosition, setCurrentPosition] = useState<Position | null>(null);
-  const [countdown, setCountdown] = useState(5);
+  const [positions, setPositions] = useState<[number, number][]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<PermissionStatus | null>(null);
 
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>;
+    let watchId: string;
 
     const checkAndRequestPermissions = async () => {
       try {
@@ -52,47 +53,34 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       }
     };
 
-    const trackLocation = async () => {
-      try {
-        const options: PositionOptions = {
-          enableHighAccuracy: true,
-          timeout: 30000,
-          maximumAge: 0
-        };
-      const position = await Geolocation.getCurrentPosition(options);
-        console.log('Current position:', JSON.stringify(position));
-        setCurrentPosition(position);
-        setCountdown(5);
-        setErrorMessage(null);
-      } catch (error) {
-        console.error('Error getting location:', JSON.stringify(error));
-        setErrorMessage('Failed to get current location. Please check your device settings.');
-      }
-    };
-
-    const initializeTracking = async () => {
+    const startWatchingPosition = async () => {
       const hasPermission = await checkAndRequestPermissions();
       if (hasPermission) {
-        await trackLocation();
-        /* TODO: Temporary measure to just test if getting the location is possible and we can
-         *   update the data live. Might be possible to integrate this into leaflet.
-         */
-        intervalId = setInterval(() => {
-          setCountdown((prevCountdown) => {
-            if (prevCountdown === 1) {
-              trackLocation();
-              return 5;
+        watchId = await Geolocation.watchPosition(
+          { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 },
+          (position, err) => {
+            if (err) {
+              console.error('Error watching position:', err);
+              setErrorMessage('Failed to get current location. Please check your device settings.');
+              return;
             }
-            return prevCountdown - 1;
-          });
-        }, 1000);
+            if (position) {  // Nned if check here or it can return null.
+              console.log('New position:', JSON.stringify(position));
+              setCurrentPosition(position);
+              setPositions(prevPositions => [
+                ...prevPositions,
+                [position.coords.latitude, position.coords.longitude]
+              ]);
+            }
+          }
+        );
       }
     };
 
-    initializeTracking();
+    startWatchingPosition();
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      if (watchId) Geolocation.clearWatch({ id: watchId });
     };
   }, []);
 
@@ -110,13 +98,18 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
           buttons={['OK']}
         />
       )}
+      {currentPosition && (
+        <JourneyMap
+          positions={positions}
+          centre={[currentPosition.coords.latitude, currentPosition.coords.longitude]}
+        />
+      )}
       <IonCard>
         <IonCardHeader>
-          <IonCardTitle>(Test) Current Location</IonCardTitle>
+          <IonCardTitle>Current Location</IonCardTitle>
         </IonCardHeader>
         <IonCardContent>
           <IonText>
-            <h2>This is a temporary card, it will be replaced with a leaflet map later.</h2>
             {permissionStatus && (
               <p>Location permission status: {permissionStatus.location}</p>
             )}
@@ -126,7 +119,6 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
                 <p>Longitude: {currentPosition.coords.longitude}</p>
                 <p>Accuracy: {currentPosition.coords.accuracy} meters</p>
                 <p>Timestamp: {new Date(currentPosition.timestamp).toLocaleString()}</p>
-                <p>Next update in: {countdown} seconds</p>
               </>
             ) : (
               <p>Waiting for location data...</p>
