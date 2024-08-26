@@ -33,8 +33,9 @@ const JourneyPage: React.FC = () => {
     // TODO: Save the journey data logic here.
   };
 
-  /* TODO: This randomly plots point in the green zone areas to show what it should look like.
-   *   will replace this with actual data from the db once I get around to it.
+  /* TODO:
+   *   This randomly plots point in the green zone areas to show what it should look like.
+   *   Will replace this with actual data from the db once I get around to it.
    */
   const generateRandomPositions = (count: number) => {
     // Roughly the bounds of the RDH campus for testing purposes.
@@ -58,7 +59,7 @@ const JourneyPage: React.FC = () => {
       generateRandomPositions(500),
     ]);
   });
-  // END TODO
+  /* END TODO */
 
   return (
     <IonPage>
