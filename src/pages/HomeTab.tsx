@@ -2,7 +2,11 @@ import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/rea
 import HomeContainer from '../components/HomeContainer';
 import './HomeTab.css';
 
-const HomeTab: React.FC = () => {
+interface TabProps {
+  user: any;
+}
+
+const HomeTab: React.FC<TabProps> = ({ user }) => {
   return (
     <IonPage>
       <IonHeader>
@@ -16,7 +20,7 @@ const HomeTab: React.FC = () => {
             <IonTitle size="large">Home</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <HomeContainer/>
+        <HomeContainer user={user}/>
       </IonContent>
     </IonPage>
   );
