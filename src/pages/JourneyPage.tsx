@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -14,15 +14,55 @@ import {
   IonCol,
   IonGrid,
   IonRow,
-  useIonViewWillEnter,
+  IonAlert,
 } from '@ionic/react';
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
 
-const JourneyPage: React.FC = () => {
+interface JourneyPageProps {
+  // TODO: Filter user role and change page to different options. (Admin has all uploaded journeys for example)
+  user: any;
+}
+
+interface Journey {
+  startTime: number;
+  endTime: number;
+  duration: number;
+  positions: { latitude: number; longitude: number; timestamp: number }[];
+}
+
+const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [isRecording, setIsRecording] = useState(false);
-  const [journeyPositions, setJourneyPositions] = useState<[number, number][][]>([]);
+  const [journeys, setJourneys] = useState<(Journey | null)[]>([]);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [journeyToDelete, setJourneyToDelete] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadJourneysFromLocalStorage();
+  }, []);
+
+  const loadJourneysFromLocalStorage = () => {
+    const storedJourneys = localStorage.getItem('allJourneys');
+    if (storedJourneys) {
+      const parsedJourneys = JSON.parse(storedJourneys);
+      const validatedJourneys = parsedJourneys.map(validateJourney);
+      setJourneys(validatedJourneys);
+    }
+  };
+
+  const validateJourney = (journey: any): Journey | null => {
+    if (
+      typeof journey.startTime !== 'number' ||
+      typeof journey.endTime !== 'number' ||
+      typeof journey.duration !== 'number' ||
+      !Array.isArray(journey.positions) ||
+      journey.positions.length === 0
+    ) {
+      return null; // fucked journey
+    }
+    return journey as Journey;
+  };
 
   const startJourney = () => {
     setIsRecording(true);
@@ -30,36 +70,98 @@ const JourneyPage: React.FC = () => {
 
   const endJourney = () => {
     setIsRecording(false);
-    // TODO: Save the journey data logic here.
+    loadJourneysFromLocalStorage();
   };
 
-  /* TODO:
-   *   This randomly plots point in the green zone areas to show what it should look like.
-   *   Will replace this with actual data from the db once I get around to it.
-   */
-  const generateRandomPositions = (count: number) => {
-    // Roughly the bounds of the RDH campus for testing purposes.
-    const minLat = -12.358300956831254;
-    const maxLat = -12.351121900279576;
-    const minLng = 130.87929010391238;
-    const maxLng = 130.885705947876;
-
-    return Array.from({ length: count }, () => [
-      // Add minimum again, or it'll end up in Papua.
-      Math.random() * (maxLat - minLat) + minLat,
-      Math.random() * (maxLng - minLng) + minLng,
-    ] as [number, number]);
+  const deleteJourney = (index: number) => {
+    setJourneyToDelete(index);
+    setShowDeleteAlert(true);
   };
 
-  useIonViewWillEnter(() => {
-    // Generate random positions for each journey
-    setJourneyPositions([
-      generateRandomPositions(4),
-      generateRandomPositions(5),
-      generateRandomPositions(500),
-    ]);
-  });
-  /* END TODO */
+  const confirmDeleteJourney = () => {
+    if (journeyToDelete !== null) {
+      const updatedJourneys = journeys.filter((_, index) => index !== journeyToDelete);
+      setJourneys(updatedJourneys);
+      localStorage.setItem('allJourneys', JSON.stringify(updatedJourneys.filter(j => j !== null)));
+      setShowDeleteAlert(false);
+      setJourneyToDelete(null);
+    }
+  };
+
+  const renderJourneyCards = () => {
+    return journeys.map((journey, index) => {
+      if (journey === null) {
+        return (
+          <IonCol key={index} size="12" size-md="6">
+            <IonCard>
+              <IonCardHeader>
+                <IonCardTitle color="danger">Corrupted Journey</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <IonButton expand="block" fill="solid" color="danger" onClick={() => deleteJourney(index)}>
+                  Delete
+                </IonButton>
+              </IonCardContent>
+            </IonCard>
+          </IonCol>
+        );
+      }
+
+      const positions: [number, number][] = journey.positions.map(pos => [pos.latitude, pos.longitude]);
+      const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
+
+      return (
+        <IonCol key={index} size="12" size-md="6">
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Journey {index + 1}</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <JourneyMap positions={positions} />
+              <ul>
+                <li>Time: {new Date(journey.startTime).toLocaleString()}</li>
+                <li>Duration: {durationInMinutes} minutes</li>
+              </ul>
+              <IonButton fill="solid" color="danger" onClick={() => deleteJourney(index)}>
+                Delete
+              </IonButton>
+              <IonButton fill="solid" color="primary">
+                Upload
+              </IonButton>
+            </IonCardContent>
+          </IonCard>
+        </IonCol>
+      );
+    });
+  };
+
+  if (!user) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Journeys</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <IonCard>
+            <IonCardHeader>
+              <IonCardTitle>Not Logged In</IonCardTitle>
+            </IonCardHeader>
+            <IonCardContent>
+              <IonText>
+                <p>You are not logged in. Please log in to record journeys.</p>
+              </IonText>
+              <IonButton routerLink="/tabs/account" expand="block">
+                Go to Account
+              </IonButton>
+            </IonCardContent>
+          </IonCard>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
 
   return (
     <IonPage>
@@ -78,7 +180,6 @@ const JourneyPage: React.FC = () => {
                 <IonText className="ion-margin-bottom">
                   <h1 className="bigtext">JOURNEYS</h1>
                 </IonText>
-                <p>PLACEHOLDER: These cards will be modular and change depending on what device you are viewing this on.</p>
               </div>
               <IonText>
                 <h2>Record a Journey</h2>
@@ -87,33 +188,33 @@ const JourneyPage: React.FC = () => {
               </IonText>
               <IonGrid>
                 <IonRow>
-                  {journeyPositions.map((positions, index) => (
-                    <IonCol key={index} size="12" size-md="6">
-                      <IonCard>
-                        <IonCardHeader>
-                          <IonCardTitle>Journey {index + 1}</IonCardTitle>
-                        </IonCardHeader>
-                        <IonCardContent>
-                          <JourneyMap positions={positions} />
-                          <ul>
-                            <li>Location: Sample Location {index + 1}</li>
-                            <li>Time: {new Date().toLocaleString()}</li>
-                            <li>Temperature: {25 + index * 2}°C</li>
-                            <li>Duration: {20 + index * 10} minutes</li>
-                          </ul>
-                          <IonButton expand="block" fill="solid" color="primary">
-                            View Journey
-                          </IonButton>
-                        </IonCardContent>
-                      </IonCard>
-                    </IonCol>
-                  ))}
+                  {renderJourneyCards()}
                 </IonRow>
               </IonGrid>
             </>
           )}
         </div>
       </IonContent>
+      <IonAlert
+        isOpen={showDeleteAlert}
+        onDidDismiss={() => setShowDeleteAlert(false)}
+        header="Confirm Delete"
+        message="Are you sure you want to delete this journey?"
+        buttons={[
+          {
+            text: 'Cancel',
+            role: 'cancel',
+            handler: () => {
+              setShowDeleteAlert(false);
+              setJourneyToDelete(null);
+            },
+          },
+          {
+            text: 'Delete',
+            handler: confirmDeleteJourney,
+          },
+        ]}
+      />
     </IonPage>
   );
 };
