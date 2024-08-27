@@ -13,61 +13,42 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonSpinner,
 } from '@ionic/react';
 import { supabase } from '../supabaseClient';
 import LoginContainer from '../components/account/LoginContainer';
 import SignupContainer from '../components/account/SignupContainer';
 
-const AccountTab: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+interface TabProps {
+  user: any;
+}
+
+const AccountTab: React.FC<TabProps> = ({ user }) => {
   const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(true);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    const fetchProfile = async () => {
       if (user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching profile: ', error);
-        } else {
+          if (error) throw error;
           setProfile(data);
+        } catch (error) {
+          console.error('Error fetching profile: ', error);
         }
       }
+      setLoading(false);
     };
 
-    checkUser();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user;
-      setUser(currentUser ?? null);
-      if (currentUser) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', currentUser.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching profile: ', error);
-        } else {
-          setProfile(data);
-        }
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    fetchProfile();
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -78,8 +59,12 @@ const AccountTab: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString(); // Database returns date data as ISO 8601 time, need to format it properly.
+    return new Date(dateString).toLocaleString();
   };
+
+  if (loading) {
+    return <IonSpinner />;
+  }
 
   /* TODO: Replace this account data with a page that lets you edit the information and set things like a user icon?
        Right now, I am just using some of the output fields you get when you run 'select * from auth.users' in

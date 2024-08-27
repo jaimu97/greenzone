@@ -14,55 +14,45 @@ import {
 import React, { useEffect, useState } from "react";
 import { supabase } from '../supabaseClient';
 
-const HomeContainer: React.FC = () => {
-  const [userData, setUserData] = useState<{user: any, profile: any} | null>(null);
+interface HomeContainerProps {
+  user: any;
+}
+
+const HomeContainer: React.FC<HomeContainerProps> = ({ user }) => {
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('first_name')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching profile: ', error);
-      return null;
-    }
-    return profile;
-  };
-
-  const updateUserData = async (currentUser: any) => {
-    if (currentUser) {
-      const profile = await fetchUserData(currentUser.id);
-      setUserData({ user: currentUser, profile });
-    } else {
-      setUserData(null);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      await updateUserData(user);
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('first_name')
+            .eq('id', user.id)
+            .single();
+
+          if (error) throw error;
+          setProfile(data);
+        } catch (error) {
+          console.error('Error fetching profile: ', error);
+        }
+      }
+      setLoading(false);
     };
 
-    checkUser().then(r => {}); // .then is just to stop checkers annoying about promises unused.
+    fetchProfile();
+  }, [user]);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user;
-      await updateUserData(currentUser ?? null); // If you ever see 'null' pls let me know. - Jai
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  if (loading) {
-    return <IonSpinner />;
-  }
+  const renderWelcomeMessage = () => {
+    if (loading) {
+      return <IonSpinner />;
+    }
+    if (user && profile) {
+      return <h2>Hello, {profile.first_name || user.email}</h2>;
+    }
+    return <h2>Welcome, Guest</h2>;
+  };
 
   return (
     <>
@@ -70,26 +60,20 @@ const HomeContainer: React.FC = () => {
         <IonText className="ion-margin-bottom">
           <h1 className="bigtext">GREEN ZONE</h1>
         </IonText>
-        {userData ? (
-          <IonText>
-            <h2>Hello, {userData.profile?.first_name || userData.user.email}</h2>
-          </IonText>
-        ) : (
-          <IonText>
-            <h2>Welcome, Guest</h2>
-          </IonText>
-        )}
+        <IonText>
+          {renderWelcomeMessage()}
+        </IonText>
         <IonGrid>
           <IonRow>
             <IonCol size="12" size-md="6">
               <IonCard className="feedback-card">
-                <img src="../../img/IMG_20160809_164508.jpg" alt="Feedback" />
+                <img src="../../img/IMG_20160809_164508.jpg" alt="Feedback"/>
                 <IonCardHeader>
                   <IonCardTitle>Share Your Journey</IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
                   <p>Help researchers and record a journey through a green zone.</p>
-                  <IonButton expand="block" fill="solid" color="primary" className="explore-button">
+                  <IonButton expand="block" fill="solid" color="primary" href="/tabs/journeys">
                     Start Journey
                   </IonButton>
                 </IonCardContent>
@@ -97,13 +81,13 @@ const HomeContainer: React.FC = () => {
             </IonCol>
             <IonCol size="12" size-md="6">
               <IonCard className="welcome-card">
-                <img src="../../img/PXL_20240806_084907679.jpg" alt="Green Zone" />
+                <img src="../../img/PXL_20240806_084907679.jpg" alt="Green Zone"/>
                 <IonCardHeader>
                   <IonCardTitle>Discover Green Zones</IonCardTitle>
                 </IonCardHeader>
                 <IonCardContent>
                   <p>Explore active green zones near you and learn about the native flora.</p>
-                  <IonButton expand="block" fill="solid" color="primary" className="explore-button" href="/tabs/map">
+                  <IonButton expand="block" fill="solid" color="primary" href="/tabs/map">
                     Explore Now
                   </IonButton>
                 </IonCardContent>

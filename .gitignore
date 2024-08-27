@@ -32,6 +32,7 @@ yarn-error.log*
 
 # Android app build files
 android/app/build
+android/.gradle
 
 # Ionic build files
 dist
