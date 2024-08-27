@@ -4,4 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://supabase.epicminecraft.xyz/';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzIyOTAyNDAwLAogICJleHAiOiAxODgwNjY4ODAwCn0.YHzK3KDDnx1nbJTAivA67mznMTulhtNdssJ2a37Uzyk';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storage: window.localStorage
+  }
+})
