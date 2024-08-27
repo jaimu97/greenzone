@@ -106,7 +106,7 @@ const App: React.FC = () => {
               <MapTab/>
             </Route>
             <Route path="/tabs/journeys">
-              <JourneyPage/>
+              <JourneyPage user={user}/>
             </Route>
             <Route path="/tabs/account">
               <AccountTab user={user}/>

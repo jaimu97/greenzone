@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
   IonButton,
-  IonText,
   IonCard,
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
-  IonGrid,
   IonCol,
+  IonGrid,
   IonRow,
+  IonText,
   IonAlert,
 } from '@ionic/react';
-import { Geolocation, Position, PermissionStatus } from '@capacitor/geolocation';
+import { Geolocation, Position } from '@capacitor/geolocation';
 import JourneyMap from './JourneyMap';
 
 interface JourneyRecordingProps {
@@ -23,66 +23,82 @@ interface JourneyRecordingProps {
 const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney }) => {
   const [currentPosition, setCurrentPosition] = useState<Position | null>(null);
   const [positions, setPositions] = useState<[number, number][]>([]);
+  const [permissionStatus, setPermissionStatus] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [permissionStatus, setPermissionStatus] = useState<PermissionStatus | null>(null);
+  const [journeyStartTime, setJourneyStartTime] = useState<number | null>(null);
 
   useEffect(() => {
+    checkPermissions();
+    startJourney();
     let watchId: string;
 
-    const checkAndRequestPermissions = async () => {
-      try {
-        const status = await Geolocation.checkPermissions();
-        console.log('Initial permission status:', status);
-        setPermissionStatus(status);
-
-        if (status.location !== 'granted') {
-          const requestStatus = await Geolocation.requestPermissions();
-          console.log('Requested permission status:', requestStatus);
-          setPermissionStatus(requestStatus);
-
-          if (requestStatus.location !== 'granted') {
-            setErrorMessage('Location permission is required to track your journey.');
-            return false;
-          }
+    const startWatching = async () => {
+      watchId = await Geolocation.watchPosition({ enableHighAccuracy: true }, (position, err) => {
+        if (err) {
+          setErrorMessage(`Failed to get location: ${err.message}`);
+        } else if (position) {
+          setCurrentPosition(position);
+          setPositions(prevPositions => [...prevPositions, [position.coords.latitude, position.coords.longitude]]);
+          saveJourneyToLocalStorage(position);
         }
-        return true;
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-        setErrorMessage('An error occurred while checking location permissions.');
-        return false;
-      }
+      });
     };
 
-    const startWatchingPosition = async () => {
-      const hasPermission = await checkAndRequestPermissions();
-      if (hasPermission) {
-        watchId = await Geolocation.watchPosition(
-          { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 },
-          (position, err) => {
-            if (err) {
-              console.error('Error watching position:', err);
-              setErrorMessage('Failed to get current location. Please check your device settings.');
-              return;
-            }
-            if (position) {  // Nned if check here or it can return null.
-              console.log('New position:', JSON.stringify(position));
-              setCurrentPosition(position);
-              setPositions(prevPositions => [
-                ...prevPositions,
-                [position.coords.latitude, position.coords.longitude]
-              ]);
-            }
-          }
-        );
-      }
-    };
-
-    startWatchingPosition();
+    startWatching();
 
     return () => {
-      if (watchId) Geolocation.clearWatch({ id: watchId });
+      if (watchId) {
+        Geolocation.clearWatch({ id: watchId });
+      }
     };
   }, []);
+
+  const checkPermissions = async () => {
+    const status = await Geolocation.checkPermissions();
+    setPermissionStatus(status);
+  };
+
+  const startJourney = () => {
+    const startTime = Date.now();
+    setJourneyStartTime(startTime);
+    localStorage.setItem('journeyStartTime', startTime.toString());
+  };
+
+  const saveJourneyToLocalStorage = (position: Position) => {
+  let journeyData = JSON.parse(localStorage.getItem('currentJourney') || '[]');
+  if (!Array.isArray(journeyData)) {
+    journeyData = [];
+  }
+  journeyData.push({
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+    timestamp: position.timestamp,
+  });
+  localStorage.setItem('currentJourney', JSON.stringify(journeyData));
+};
+
+  const handleEndJourney = () => {
+    if (journeyStartTime) {
+      const journeyEndTime = Date.now();
+      const journeyDuration = journeyEndTime - journeyStartTime;
+
+      const completeJourney = {
+        startTime: journeyStartTime,
+        endTime: journeyEndTime,
+        duration: journeyDuration,
+        positions: JSON.parse(localStorage.getItem('currentJourney') || '[]'),
+      };
+
+      const allJourneys = JSON.parse(localStorage.getItem('allJourneys') || '[]');
+      allJourneys.push(completeJourney);
+      localStorage.setItem('allJourneys', JSON.stringify(allJourneys));
+
+      localStorage.removeItem('currentJourney');
+      localStorage.removeItem('journeyStartTime');
+
+      onEndJourney();
+    }
+  };
 
   return (
     <>
@@ -126,7 +142,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
           </IonText>
         </IonCardContent>
       </IonCard>
-      <IonButton expand="block" color="danger" onClick={onEndJourney}>
+      <IonButton expand="block" color="danger" onClick={handleEndJourney}>
         End Journey
       </IonButton>
       <IonGrid className="ion-padding-top">
