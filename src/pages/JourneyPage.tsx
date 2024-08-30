@@ -19,11 +19,20 @@ import {
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
+import { supabase } from '../supabaseClient'
 
 interface JourneyPageProps {
   // TODO: Filter user role and change page to different options. (Admin has all uploaded journeys for example)
   user: any;
 }
+
+/* TODO: Admin page
+ *  - Paths people are taking
+ *  - See if people have been commenting on plants & who has accessed them.
+ *  -
+ * TODO: User page
+ *  - Heatmap of where users are spending most of their time.
+ */
 
 interface Journey {
   startTime: number;
@@ -37,6 +46,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [journeys, setJourneys] = useState<(Journey | null)[]>([]);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [journeyToDelete, setJourneyToDelete] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState<number | null>(null);
 
   useEffect(() => {
     loadJourneysFromLocalStorage();
@@ -88,6 +98,68 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     }
   };
 
+  const uploadJourney = async (journey: Journey, index: number) => {
+    if (!user) {
+      console.error('User not logged in. This shouldn\'t happen...')
+      return;
+    }
+
+    /* indexing instead of using blanket 'true' statement to track which journey is being uploaded
+     * so that the button state can be set to 'disabled' and prevent users from uploading it more than once.
+     */
+    setIsUploading(index);
+
+    try {
+      console.log('DEBUG: User object:', user);
+      console.log('DEBUG: Attempting to insert journey for user:', user.id);
+      const { data: journeyData, error: journeyError } = await supabase
+        .from('journeys')
+        .insert({
+          journey_user: user.id,
+          journey_start: new Date(journey.startTime).toISOString(),
+          journey_finish: new Date(journey.endTime).toISOString()
+        })
+        .select()
+        .single();
+
+      if (journeyError) {
+        console.error('DEBUG: Journey insert error:', journeyError);
+
+        throw journeyError;
+      }
+
+      console.log('DEBUG: Journey inserted successfully:', journeyData);
+
+      const locationInserts = journey.positions.map(pos => ({
+        journey_id: journeyData.id,
+        // POINT(lat lng): https://www.crunchydata.com/blog/postgis-and-the-geography-type
+        location: `POINT(${pos.longitude} ${pos.latitude})`,
+        location_time: new Date(pos.timestamp).toISOString()
+      }));
+
+      const { error: locationError } = await supabase
+        .from('location')
+        .insert(locationInserts);
+
+      if (locationError) throw locationError;
+
+      console.log('Journey uploaded successfully!')
+
+      // remove from local storage:
+      const updatedJourneys = journeys.filter((_, i) => i !== index);
+      setJourneys(updatedJourneys);
+      localStorage.setItem('allJourneys', JSON.stringify(updatedJourneys.filter(j => j !== null)));
+
+      setIsUploading(null);
+    } catch (error) {
+      console.error('Error uploading journey:', error);
+      setIsUploading(null);
+    }
+
+  };
+
+  // TODO: Get uploaded journeys uploaded and give the user an option to delete them from the cloud.
+
   const renderJourneyCards = () => {
     return journeys.map((journey, index) => {
       if (journey === null) {
@@ -125,8 +197,13 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               <IonButton fill="solid" color="danger" onClick={() => deleteJourney(index)}>
                 Delete
               </IonButton>
-              <IonButton fill="solid" color="primary">
-                Upload
+              <IonButton
+                fill="solid"
+                color="primary"
+                onClick={() => uploadJourney(journey, index)}
+                disabled={isUploading === index}
+              >
+                {isUploading === index ? 'Uploading...' : 'Upload'}
               </IonButton>
             </IonCardContent>
           </IonCard>
