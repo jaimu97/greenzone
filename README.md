@@ -36,8 +36,12 @@ You'll need to install Android Studio from [here](https://developer.android.com/
 npm install @capacitor/android
 ```
 
-Once that is installed, you *should* be able to run this `ionic cap open android` in the same directory as where you 
+Once that is installed, you *should* be able to run this `ionic cap copy` in the same directory as where you 
 were running `ionic serve`.
+
+This will "compile" the site and make an Android Studio project for you to use.
+
+Next, run `ionic cap open android`
 
 This will open up Android Studio in the `greenzone/android` directory. 
 
@@ -54,14 +58,3 @@ Any other problems, see ionic's documentation
 Please don't add the `ios` capacitor, or it'll break building the android project since the `ionic cap copy` command tries
 to build for both at the same time. If you're not on a Mac with Xcode installed, this will error out and leave you with 
 an incomplete project.
-
-## Sources:
-
-Pages I've *borrowed* code from. (For reference later if needed)
-
-- https://legacy.reactjs.org/docs/hooks-state.html
-- https://ionicframework.com/docs/react/navigation#ionpage
-- https://ionic.io/ionicons
-- https://ionicframework.com/docs/components
-- https://supabase.com/docs/guides/getting-started/tutorials/with-ionic-react
-- https://dev.to/raaynaldo/javascript-datetime-111e
