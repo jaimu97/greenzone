@@ -36,12 +36,23 @@ You'll need to install Android Studio from [here](https://developer.android.com/
 npm install @capacitor/android
 ```
 
-Once that is installed, you *should* be able to run this `ionic cap copy` in the same directory as where you 
+Once that is installed, you *should* be able to run this:
+
+```
+ionic cap add android 
+ionic cap copy
+```
+
+in the same directory as where you 
 were running `ionic serve`.
 
-This will "compile" the site and make an Android Studio project for you to use.
+This will make an Android Studio project for you to use and then 'compile' the project, coping over the files.
 
-Next, run `ionic cap open android`
+Next, run:
+
+```
+ionic cap open android
+```
 
 This will open up Android Studio in the `greenzone/android` directory. 
 
