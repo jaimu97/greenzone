@@ -56,8 +56,32 @@ ionic cap open android
 
 This will open up Android Studio in the `greenzone/android` directory. 
 
-Once it's open, click the green play button in the top right which should build the app and open it on an emulator or 
-device.
+### !! IMPORTANT !!
+
+Once it's open, you will need to manually add location access to the `AndroidManifest.xml`
+
+If you do not do this, you will get errors trying to record journeys since the capacitor does not do this automatically.
+
+Once Android Studio is open, open this file: `android/app/src/main/AndroidManifest.xml`.
+
+Inside Android Studio this is found in `app/manifests/AndroidManifest.xml`. This is same file, as above just represented
+differently.
+
+Inside the manifest file, add the following lines **at the top of the file** after the `<manifest>` tag but before the
+`<application>` tag:
+
+```xml
+<!-- Permissions -->
+<uses-permission android:name="android.permission.INTERNET" />
+
+<!-- Geolocation API -->
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-feature android:name="android.hardware.location.gps" />
+```
+
+With that copied in, you should be able to click the green play button in the top right which should build the app and 
+open it on an emulator or device.
 
 Any other problems, see ionic's documentation 
 [here](https://ionicframework.com/docs/react/your-first-app/deploying-mobile#capacitor-setup).
