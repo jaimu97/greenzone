@@ -31,8 +31,10 @@ yarn-error.log*
 .eslintcache
 
 # Android app build files
-android/app/build
-android/.gradle
+android
 
-# Ionic build files
-dist
+# iOS app build files
+ios
+
+# Visual Studio Code files
+.vscode
