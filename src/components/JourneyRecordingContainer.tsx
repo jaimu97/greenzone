@@ -82,9 +82,19 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       const journeyEndTime = Date.now();
       const journeyDuration = journeyEndTime - journeyStartTime;
 
+      const formatWithOffset = (timestamp: number) => {
+        /* *definitely* not the right way to do this, but needed to 'force' darwin time into the database so when
+         * we reconstruct the green zones, it'll always have darwin time. could also do this in the reconstruction
+         * but seems like the better way is to do it here and if there are ever more green zones outside the NT,
+         * you can just replace this with a function with an insert of the timezone it was taken in instead
+         * ¯\_(ツ)_/¯
+         */
+        return new Date(timestamp).toISOString().replace('Z', '+09:30'); // Z = UTC Time
+      };
+
       const completeJourney = {
-        startTime: journeyStartTime,
-        endTime: journeyEndTime,
+        startTime: formatWithOffset(journeyStartTime),
+        endTime: formatWithOffset(journeyEndTime),
         duration: journeyDuration,
         positions: JSON.parse(localStorage.getItem('currentJourney') || '[]'),
       };
