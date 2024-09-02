@@ -15,6 +15,7 @@ import {
   IonGrid,
   IonRow,
   IonAlert,
+  IonSpinner,
 } from '@ionic/react';
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
@@ -34,11 +35,23 @@ interface JourneyPageProps {
  *  - Heatmap of where users are spending most of their time.
  */
 
+
+// localstorage journey
 interface Journey {
+  id?: number; // Not used on local journeys, just need it or get a TS2339 error: `Property 'id' does not exist on type 'Journey'.`
   startTime: number;
   endTime: number;
   duration: number;
   positions: { latitude: number; longitude: number; timestamp: number }[];
+}
+
+// supabase journey
+interface ServerJourney {
+  id: number;
+  journey_user: string;
+  journey_start: string;
+  journey_finish: string;
+  locations: { location: string; location_time: string }[];
 }
 
 const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
@@ -47,10 +60,13 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [journeyToDelete, setJourneyToDelete] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState<number | null>(null);
+  const [serverJourneys, setServerJourneys] = useState<Journey[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadJourneysFromLocalStorage();
-  }, []);
+    fetchServerJourneys();
+  }, [user]);
 
   const loadJourneysFromLocalStorage = () => {
     const storedJourneys = localStorage.getItem('allJourneys');
@@ -60,6 +76,66 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       setJourneys(validatedJourneys);
     }
   };
+
+  const fetchServerJourneys = async () => {
+  if (!user) return;
+
+  setIsLoading(true);
+  try {
+    const { data: journeyData, error: journeyError } = await supabase
+      .from('journeys')
+      .select('*')
+      .eq('journey_user', user.id);
+
+    if (journeyError) throw journeyError;
+
+    const journeysWithLocations = await Promise.all(
+      journeyData.map(async (journey) => {
+        const { data: locationData, error: locationError } = await supabase
+          .from('location')
+          .select('location, location_time')
+          .eq('journey_id', journey.id);
+
+        if (locationError) throw locationError;
+
+        return {
+          ...journey,
+          locations: locationData
+        };
+      })
+    );
+
+    const formattedJourneys = journeysWithLocations.map((journey: ServerJourney) => ({
+      id: journey.id,
+      startTime: new Date(journey.journey_start).getTime(),
+      endTime: new Date(journey.journey_finish).getTime(),
+      duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
+      positions: journey.locations.map(loc => {
+        if (typeof loc.location === 'string' && loc.location.includes('(')) {
+          const [lon, lat] = loc.location.substring(
+            loc.location.indexOf('(') + 1,
+            loc.location.indexOf(')')
+          ).split(' ');
+          return {
+            latitude: parseFloat(lat),
+            longitude: parseFloat(lon),
+            timestamp: new Date(loc.location_time).getTime()
+          };
+        } else {
+          console.error('Unexpected location format:', loc.location);
+          return null;
+        }
+      }).filter(pos => pos !== null)
+    }));
+
+    // setServerJourneys(formattedJourneys);
+    setServerJourneys(formattedJourneys.filter((journey): journey is Journey => journey !== null));
+  } catch (error) {
+    console.error('Error fetching journeys:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const validateJourney = (journey: any): Journey | null => {
     if (
@@ -86,6 +162,21 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const deleteJourney = (index: number) => {
     setJourneyToDelete(index);
     setShowDeleteAlert(true);
+  };
+
+  const deleteServerJourney = async (journeyId: number) => {
+    try {
+      const { error } = await supabase
+        .from('journeys')
+        .delete()
+        .eq('id', journeyId);
+
+      if (error) throw error;
+
+      setServerJourneys(prevJourneys => prevJourneys.filter(journey => journey.id !== journeyId));
+    } catch (error) {
+      console.error('Error deleting journey:', error);
+    }
   };
 
   const confirmDeleteJourney = () => {
@@ -158,35 +249,16 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   };
 
-  // TODO: Get uploaded journeys uploaded and give the user an option to delete them from the cloud.
-
-  const renderJourneyCards = () => {
-    return journeys.map((journey, index) => {
-      if (journey === null) {
-        return (
-          <IonCol key={index} size="12" size-md="6">
-            <IonCard>
-              <IonCardHeader>
-                <IonCardTitle color="danger">Corrupted Journey</IonCardTitle>
-              </IonCardHeader>
-              <IonCardContent>
-                <IonButton expand="block" fill="solid" color="danger" onClick={() => deleteJourney(index)}>
-                  Delete
-                </IonButton>
-              </IonCardContent>
-            </IonCard>
-          </IonCol>
-        );
-      }
-
+  const renderJourneyCards = (journeys: (Journey | null)[], isLocal: boolean) => {
+    return journeys.filter((journey): journey is Journey => journey !== null).map((journey, index) => {
       const positions: [number, number][] = journey.positions.map(pos => [pos.latitude, pos.longitude]);
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
 
       return (
-        <IonCol key={index} size="12" size-md="6">
+        <IonCol key={isLocal ? index : journey.id} size="12" size-md="6">
           <IonCard>
             <IonCardHeader>
-              <IonCardTitle>Journey {index + 1}</IonCardTitle>
+              <IonCardTitle>{isLocal ? `Local Journey ${index + 1}` : `Server Journey ${journey.id}`}</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
               <JourneyMap positions={positions} />
@@ -194,17 +266,23 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                 <li>Time: {new Date(journey.startTime).toLocaleString()}</li>
                 <li>Duration: {durationInMinutes} minutes</li>
               </ul>
-              <IonButton fill="solid" color="danger" onClick={() => deleteJourney(index)}>
-                Delete
-              </IonButton>
               <IonButton
                 fill="solid"
-                color="primary"
-                onClick={() => uploadJourney(journey, index)}
-                disabled={isUploading === index}
+                color="danger"
+                onClick={() => isLocal ? deleteJourney(index) : journey.id ? deleteServerJourney(journey.id) : null}
               >
-                {isUploading === index ? 'Uploading...' : 'Upload'}
+                Delete
               </IonButton>
+              {isLocal && (
+                <IonButton
+                  fill="solid"
+                  color="primary"
+                  onClick={() => uploadJourney(journey, index)}
+                  disabled={isUploading === index}
+                >
+                  {isUploading === index ? 'Uploading...' : 'Upload'}
+                </IonButton>
+              )}
             </IonCardContent>
           </IonCard>
         </IonCol>
@@ -265,9 +343,18 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               </IonText>
               <IonGrid>
                 <IonRow>
-                  {renderJourneyCards()}
+                  {renderJourneyCards(journeys, true)}
                 </IonRow>
               </IonGrid>
+              {isLoading ? (
+                <IonSpinner />
+              ) : (
+                <IonGrid>
+                  <IonRow>
+                    {renderJourneyCards(serverJourneys, false)}
+                  </IonRow>
+                </IonGrid>
+              )}
             </>
           )}
         </div>
