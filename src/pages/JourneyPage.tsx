@@ -20,8 +20,7 @@ import {
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
-import { supabase } from '../supabaseClient';
-import * as wkx from 'wkx';
+import { supabase } from '../supabaseClient'
 
 interface JourneyPageProps {
   // TODO: Filter user role and change page to different options. (Admin has all uploaded journeys for example)
@@ -129,7 +128,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       }).filter(pos => pos !== null)
     }));
 
-    setServerJourneys(formattedJourneys);
+    // setServerJourneys(formattedJourneys);
+    setServerJourneys(formattedJourneys.filter((journey): journey is Journey => journey !== null));
   } catch (error) {
     console.error('Error fetching journeys:', error);
   } finally {
