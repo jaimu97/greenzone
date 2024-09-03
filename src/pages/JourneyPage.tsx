@@ -81,6 +81,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       } catch (error) {
         console.error('Error parsing stored journeys:', error);
       }
+    } else {
+      setJourneys([]);
     }
   };
 
@@ -120,7 +122,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
         endTime: new Date(journey.journey_finish).getTime(),
         duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
         positions: journey.locations
-          .filter(loc => loc && loc.location && typeof loc.location === 'string')
+          .filter(loc => loc && loc.location && true)
           .map(loc => {
             try {
             /* FIXME: To whoever will work on this in the future, we changed the database from PostGIS' 'location' format
@@ -163,8 +165,6 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     ) {
       return null; // fucked journey
     }
-    const startTime = typeof journey.startTime === 'string' ? new Date(journey.startTime).getTime() : journey.startTime;
-    const endTime = typeof journey.endTime === 'string' ? new Date(journey.endTime).getTime() : journey.endTime;
 
     return {
       startTime: new Date(journey.startTime).getTime(),
@@ -223,9 +223,10 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   const confirmDeleteJourney = async () => {
     if (journeyToDelete !== null) {
-      const updatedJourneys = journeys.filter((_, index) => index !== journeyToDelete);
-      setJourneys(updatedJourneys);
-      localStorage.setItem('allJourneys', JSON.stringify(updatedJourneys.filter(j => j !== null)));
+      const storedJourneys = JSON.parse(localStorage.getItem('allJourneys') || '[]');
+      storedJourneys.splice(journeyToDelete, 1); // unga bunga should remove the journey at the specified index not ALL
+      localStorage.setItem('allJourneys', JSON.stringify(storedJourneys));
+      setJourneys(storedJourneys);
       setShowDeleteAlert(false);
       setJourneyToDelete(null);
     }
