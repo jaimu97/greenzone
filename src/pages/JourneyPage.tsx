@@ -67,14 +67,20 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     console.log('Current user:', user);
     loadJourneysFromLocalStorage();
     fetchServerJourneys();
+    console.log('Loaded journeys:', journeys);
   }, [user]);
 
   const loadJourneysFromLocalStorage = () => {
     const storedJourneys = localStorage.getItem('allJourneys');
+    console.log('Stored journeys:', storedJourneys);
     if (storedJourneys) {
-      const parsedJourneys = JSON.parse(storedJourneys);
-      const validatedJourneys = parsedJourneys.map(validateJourney);
-      setJourneys(validatedJourneys);
+      try {
+        const parsedJourneys = JSON.parse(storedJourneys);
+        const validatedJourneys = parsedJourneys.map(validateJourney).filter((j: null) => j !== null);
+        setJourneys(validatedJourneys);
+      } catch (error) {
+        console.error('Error parsing stored journeys:', error);
+      }
     }
   };
 
@@ -149,15 +155,27 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   const validateJourney = (journey: any): Journey | null => {
     if (
-      typeof journey.startTime !== 'number' ||
-      typeof journey.endTime !== 'number' ||
+      typeof journey.startTime !== 'string' ||
+      typeof journey.endTime !== 'string' ||
       typeof journey.duration !== 'number' ||
       !Array.isArray(journey.positions) ||
       journey.positions.length === 0
     ) {
       return null; // fucked journey
     }
-    return journey as Journey;
+    const startTime = typeof journey.startTime === 'string' ? new Date(journey.startTime).getTime() : journey.startTime;
+    const endTime = typeof journey.endTime === 'string' ? new Date(journey.endTime).getTime() : journey.endTime;
+
+    return {
+      startTime: new Date(journey.startTime).getTime(),
+      endTime: new Date(journey.endTime).getTime(),
+      duration: journey.duration,
+      positions: journey.positions.map((pos: any) => ({
+        latitude: parseFloat(pos.latitude),
+        longitude: parseFloat(pos.longitude),
+        timestamp: pos.timestamp
+      }))
+    };
   };
 
   const startJourney = () => {
@@ -275,7 +293,12 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   const renderJourneyCards = (journeys: (Journey | null)[], isLocal: boolean) => {
     return journeys.filter((journey): journey is Journey => journey !== null).map((journey, index) => {
-      const positions: [number, number][] = journey.positions.map(pos => [pos.latitude, pos.longitude]);
+      let positions: [number, number][] = [];
+      try {
+        positions = journey.positions.map(pos => [pos.latitude, pos.longitude]);
+      } catch (error) {
+        console.error('Error parsing positions:', error);
+      }
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
 
       const isCorrupted = positions.length === 0;
