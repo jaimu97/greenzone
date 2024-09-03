@@ -65,17 +65,16 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   };
 
   const saveJourneyToLocalStorage = (position: Position) => {
-  let journeyData = JSON.parse(localStorage.getItem('currentJourney') || '[]');
-  if (!Array.isArray(journeyData)) {
-    journeyData = [];
-  }
-  journeyData.push({
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-    timestamp: position.timestamp,
-  });
-  localStorage.setItem('currentJourney', JSON.stringify(journeyData));
-};
+    let journeyData = JSON.parse(localStorage.getItem('currentJourney') || '[]');
+    if (!Array.isArray(journeyData)) {
+      journeyData = [];
+    }
+    journeyData.push({
+      location: `POINT(${position.coords.longitude} ${position.coords.latitude})`,
+      timestamp: position.timestamp,
+    });
+    localStorage.setItem('currentJourney', JSON.stringify(journeyData));
+  };
 
   const handleEndJourney = () => {
     if (journeyStartTime) {
@@ -89,14 +88,18 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
          * you can just replace this with a function with an insert of the timezone it was taken in instead
          * ¯\_(ツ)_/¯
          */
-        return new Date(timestamp).toISOString().replace('Z', '+09:30'); // Z = UTC Time
+        return new Date(timestamp).toISOString().replace('Z', '+09:30'); // Z = UTC Time (Zulu Time)
       };
 
       const completeJourney = {
         startTime: formatWithOffset(journeyStartTime),
         endTime: formatWithOffset(journeyEndTime),
         duration: journeyDuration,
-        positions: JSON.parse(localStorage.getItem('currentJourney') || '[]'),
+        positions: JSON.parse(localStorage.getItem('currentJourney') || '[]').map((pos: any) => ({
+          latitude: parseFloat(pos.location.split(' ')[1].slice(0, -1)), // split after space and remove -1 = ')'
+          longitude: parseFloat(pos.location.split(' ')[0].slice(6)), // before space, remove 6 = 'POINT('
+          timestamp: pos.timestamp,
+        })),
       };
 
       const allJourneys = JSON.parse(localStorage.getItem('allJourneys') || '[]');
