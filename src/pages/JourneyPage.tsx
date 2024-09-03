@@ -322,11 +322,11 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       }
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
 
-        return (
+      return (
         <IonCol key={isLocal ? index : journey.id} size="12" size-md="6">
           <IonCard>
             <IonCardHeader>
-              <IonCardTitle>{isLocal ? `Local Journey ${index + 1}` : `Server Journey ${journey.id}`}</IonCardTitle>
+              <IonCardTitle>Journey: {new Date(journey.startTime).toLocaleString()} ({durationInMinutes} Minutes)</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
               {journey.isCorrupted ? (
@@ -338,29 +338,35 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               ) : (
                 <>
                   <JourneyMap positions={positions} />
-                  <ul>
-                    <li>Time: {new Date(journey.startTime).toLocaleString()}</li>
-                    <li>Duration: {durationInMinutes} minutes</li>
-                  </ul>
                 </>
               )}
-              <IonButton
-                fill="solid"
-                color="danger"
-                onClick={() => isLocal ? deleteJourney(index) : journey.id ? deleteServerJourney(journey.id) : null}
-              >
-                Delete
-              </IonButton>
-              {isLocal && !journey.isCorrupted && (
-                <IonButton
-                  fill="solid"
-                  color="primary"
-                  onClick={() => uploadJourney(journey, index)}
-                  disabled={isUploading === index}
-                >
-                  {isUploading === index ? 'Uploading...' : 'Upload'}
-                </IonButton>
-              )}
+               <IonGrid>
+                <IonRow>
+                  <IonCol size="6">
+                    <IonButton
+                      expand="block"
+                      fill="solid"
+                      color="danger"
+                      onClick={() => isLocal ? deleteJourney(index) : journey.id ? deleteServerJourney(journey.id) : null}
+                    >
+                      Delete
+                    </IonButton>
+                  </IonCol>
+                  <IonCol size="6">
+                    {isLocal && !journey.isCorrupted && (
+                      <IonButton
+                        expand="block"
+                        fill="solid"
+                        color="primary"
+                        onClick={() => uploadJourney(journey, index)}
+                        disabled={isUploading === index}
+                      >
+                        {isUploading === index ? 'Uploading...' : 'Upload'}
+                      </IonButton>
+                    )}
+                  </IonCol>
+                </IonRow>
+             </IonGrid>
             </IonCardContent>
           </IonCard>
         </IonCol>
@@ -419,20 +425,12 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                 <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
                 <h2>Previous Journeys</h2>
               </IonText>
-
-             <IonGrid>
+              <IonGrid>
                 <IonRow>
                   {renderJourneyCards(journeys, true)}
+                  {isLoading ? (<IonSpinner />) : renderJourneyCards(serverJourneys, false)}
                 </IonRow>
-              </IonGrid> {isLoading ? (
-                <IonSpinner />
-              ) : (
-                <IonGrid>
-                  <IonRow>
-                    {renderJourneyCards(serverJourneys, false)}
-                  </IonRow>
-                </IonGrid>
-              )}
+              </IonGrid>
             </>
           )}
         </div>
