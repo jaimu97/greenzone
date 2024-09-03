@@ -78,64 +78,63 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   };
 
   const fetchServerJourneys = async () => {
-  if (!user) return;
+    if (!user) return;
 
-  setIsLoading(true);
-  try {
-    const { data: journeyData, error: journeyError } = await supabase
-      .from('journeys')
-      .select('*')
-      .eq('journey_user', user.id);
+    setIsLoading(true);
+    try {
+      const { data: journeyData, error: journeyError } = await supabase
+        .from('journeys')
+        .select('*')
+        .eq('journey_user', user.id);
 
-    if (journeyError) throw journeyError;
+      if (journeyError) throw journeyError;
 
-    const journeysWithLocations = await Promise.all(
-      journeyData.map(async (journey) => {
-        const { data: locationData, error: locationError } = await supabase
-          .from('location')
-          .select('location, location_time')
-          .eq('journey_id', journey.id);
+      const journeysWithLocations = await Promise.all(
+        journeyData.map(async (journey) => {
+          const { data: locationData, error: locationError } = await supabase
+            .from('location')
+            .select('location, location_time')
+            .eq('journey_id', journey.id);
 
-        if (locationError) throw locationError;
+          if (locationError) throw locationError;
 
-        return {
-          ...journey,
-          locations: locationData
-        };
-      })
-    );
-
-    const formattedJourneys = journeysWithLocations.map((journey: ServerJourney) => ({
-      id: journey.id,
-      startTime: new Date(journey.journey_start).getTime(),
-      endTime: new Date(journey.journey_finish).getTime(),
-      duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
-      positions: journey.locations.map(loc => {
-        if (typeof loc.location === 'string' && loc.location.includes('(')) {
-          const [lon, lat] = loc.location.substring(
-            loc.location.indexOf('(') + 1,
-            loc.location.indexOf(')')
-          ).split(' ');
           return {
-            latitude: parseFloat(lat),
-            longitude: parseFloat(lon),
-            timestamp: new Date(loc.location_time).getTime()
+            ...journey,
+            locations: locationData
           };
-        } else {
-          console.error('Unexpected location format:', loc.location);
-          return null;
-        }
-      }).filter(pos => pos !== null)
-    }));
+        })
+      );
 
-    // setServerJourneys(formattedJourneys);
-    setServerJourneys(formattedJourneys.filter((journey): journey is Journey => journey !== null));
-  } catch (error) {
-    console.error('Error fetching journeys:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      const formattedJourneys = journeysWithLocations.map((journey: ServerJourney) => ({
+        id: journey.id,
+        startTime: new Date(journey.journey_start).getTime(),
+        endTime: new Date(journey.journey_finish).getTime(),
+        duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
+        positions: journey.locations.map(loc => {
+          if (typeof loc.location === 'string' && loc.location.includes('(')) {
+            const [lon, lat] = loc.location.substring(
+              loc.location.indexOf('(') + 1,
+              loc.location.indexOf(')')
+            ).split(' ');
+            return {
+              latitude: parseFloat(lat),
+              longitude: parseFloat(lon),
+              timestamp: new Date(loc.location_time).getTime()
+            };
+          } else {
+            console.error('Unexpected location format:', loc.location);
+            return null;
+          }
+        }).filter(pos => pos !== null)
+      }));
+
+      setServerJourneys(formattedJourneys);
+    } catch (error) {
+      console.error('Error fetching journeys:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const validateJourney = (journey: any): Journey | null => {
     if (
