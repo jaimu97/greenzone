@@ -64,6 +64,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Current user:', user);
     loadJourneysFromLocalStorage();
     fetchServerJourneys();
   }, [user]);
@@ -82,12 +83,14 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
     setIsLoading(true);
     try {
+      console.log('Fetching journeys for user ID:', user.id);
       const { data: journeyData, error: journeyError } = await supabase
         .from('journeys')
         .select('*')
         .eq('journey_user', user.id);
 
       if (journeyError) throw journeyError;
+      console.log('Fetched journeys:', journeyData);
 
       const journeysWithLocations = await Promise.all(
         journeyData.map(async (journey) => {
@@ -122,14 +125,6 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
              *   to the 'else' statement is all you *should* need to adapt to make it work.
              *   Good luck. o7
              */
-
-            // const match = loc.location.match(/POINT\((-?\d+\.?\d*)\s+(-?\d+\.?\d*)\)/); // unga bunga i fucking hate regex
-            // if (match) {
-            //   return {
-            //     latitude: parseFloat(match[2]),
-            //     longitude: parseFloat(match[1]),
-            //     timestamp: new Date(loc.location_time).getTime()
-            //   };
             const [lon, lat] = loc.location.slice(6, -1).split(' ');
               return {
                 latitude: parseFloat(lat),
@@ -181,20 +176,34 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   const deleteServerJourney = async (journeyId: number) => {
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete journey:', journeyId);
+      const { data: deletedJourney, error: journeyError } = await supabase
         .from('journeys')
         .delete()
         .eq('id', journeyId);
 
-      if (error) throw error;
+      if (journeyError) throw journeyError;
+      console.log('Deleted journey:', deletedJourney);
+
+      const { data: deletedLocations, error: locationError } = await supabase
+        .from('location')
+        .delete()
+        .eq('journey_id', journeyId);
+
+      if (locationError) throw locationError;
+      console.log('Deleted locations:', deletedLocations);
 
       setServerJourneys(prevJourneys => prevJourneys.filter(journey => journey.id !== journeyId));
+
+      await fetchServerJourneys();
+
+      console.log('Journey deleted successfully');
     } catch (error) {
       console.error('Error deleting journey:', error);
     }
   };
 
-  const confirmDeleteJourney = () => {
+  const confirmDeleteJourney = async () => {
     if (journeyToDelete !== null) {
       const updatedJourneys = journeys.filter((_, index) => index !== journeyToDelete);
       setJourneys(updatedJourneys);
@@ -216,8 +225,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     setIsUploading(index);
 
     try {
-      console.log('DEBUG: User object:', user);
-      console.log('DEBUG: Attempting to insert journey for user:', user.id);
+      console.log('User object:', user);
+      console.log('Attempting to insert journey for user:', user.id);
       const { data: journeyData, error: journeyError } = await supabase
         .from('journeys')
         .insert({
@@ -229,12 +238,12 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
         .single();
 
       if (journeyError) {
-        console.error('DEBUG: Journey insert error:', journeyError);
+        console.error('Journey insert error:', journeyError);
 
         throw journeyError;
       }
 
-      console.log('DEBUG: Journey inserted successfully:', journeyData);
+      console.log('Journey inserted successfully:', journeyData);
 
       const locationInserts = journey.positions.map(pos => ({
         journey_id: journeyData.id,
