@@ -43,6 +43,7 @@ interface Journey {
   endTime: number;
   duration: number;
   positions: { latitude: number; longitude: number; timestamp: number }[];
+  isCorrupted?: boolean;
 }
 
 // supabase journey
@@ -56,7 +57,7 @@ interface ServerJourney {
 
 const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [isRecording, setIsRecording] = useState(false);
-  const [journeys, setJourneys] = useState<(Journey | null)[]>([]);
+  const [journeys, setJourneys] = useState<(Journey)[]>([]);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [journeyToDelete, setJourneyToDelete] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState<number | null>(null);
@@ -76,13 +77,11 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     if (storedJourneys) {
       try {
         const parsedJourneys = JSON.parse(storedJourneys);
-        const validatedJourneys = parsedJourneys.map(validateJourney).filter((j: null) => j !== null);
+        const validatedJourneys = parsedJourneys.map(validateJourney);
         setJourneys(validatedJourneys);
       } catch (error) {
         console.error('Error parsing stored journeys:', error);
       }
-    } else {
-      setJourneys([]);
     }
   };
 
@@ -116,36 +115,45 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
         })
       );
 
-      const formattedJourneys = journeysWithLocations.map((journey: ServerJourney) => ({
-        id: journey.id,
-        startTime: new Date(journey.journey_start).getTime(),
-        endTime: new Date(journey.journey_finish).getTime(),
-        duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
-        positions: journey.locations
-          .filter(loc => loc && loc.location && true)
-          .map(loc => {
-            try {
-            /* FIXME: To whoever will work on this in the future, we changed the database from PostGIS' 'location' format
-             *   to text since we were having trouble with the Well-Known Binary (WKB) format Postgres was returning.
-             *   We tried 'common' libraries such as 'simple-features-wkb-js', 'wellknown', 'wkx' and none of them worked
-             *   for me for various different reasons.
-             *   The uploading section is unchanged so if you ever in the future want to change it back, from this comment
-             *   to the 'else' statement is all you *should* need to adapt to make it work.
-             *   Good luck. o7
-             */
-            const [lon, lat] = loc.location.slice(6, -1).split(' ');
-              return {
-                latitude: parseFloat(lat),
-                longitude: parseFloat(lon),
-                timestamp: new Date(loc.location_time).getTime()
-              };
-            } catch (error) {
-              console.error('Error parsing location:', loc.location, error);
-              return null;
-            }
-          })
-          .filter(pos => pos !== null)
-      }));
+      const formattedJourneys = journeysWithLocations.map((journey: ServerJourney) => {
+        try {
+          return {
+            id: journey.id,
+            startTime: new Date(journey.journey_start).getTime(),
+            endTime: new Date(journey.journey_finish).getTime(),
+            duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
+            positions: journey.locations
+              .filter(loc => loc && loc.location && typeof loc.location === 'string')
+              .map(loc => {
+                /* FIXME: To whoever will work on this in the future, we changed the database from PostGIS' 'location' format
+                 *   to text since we were having trouble with the Well-Known Binary (WKB) format Postgres was returning.
+                 *   We tried 'common' libraries such as 'simple-features-wkb-js', 'wellknown', 'wkx' and none of them worked
+                 *   for me for various different reasons.
+                 *   The uploading section is unchanged so if you ever in the future want to change it back, from this comment
+                 *   to the 'else' statement is all you *should* need to adapt to make it work.
+                 *   Good luck. o7
+                 */
+                const [lon, lat] = loc.location.slice(6, -1).split(' ');
+                return {
+                  latitude: parseFloat(lat),
+                  longitude: parseFloat(lon),
+                  timestamp: new Date(loc.location_time).getTime()
+                };
+              })
+              .filter(pos => pos !== null)
+          };
+        } catch (error) {
+          console.error('Error parsing journey:', journey, error);
+          return {
+            id: journey.id,
+            startTime: 0,
+            endTime: 0,
+            duration: 0,
+            positions: [],
+            isCorrupted: true
+          };
+        }
+      });
 
       setServerJourneys(formattedJourneys);
     } catch (error) {
@@ -163,7 +171,13 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       !Array.isArray(journey.positions) ||
       journey.positions.length === 0
     ) {
-      return null; // fucked journey
+      return {
+        startTime: 0,
+        endTime: 0,
+        duration: 0,
+        positions: [],
+        isCorrupted: true
+      }; // fucked journey
     }
 
     return {
@@ -284,6 +298,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       setJourneys(updatedJourneys);
       localStorage.setItem('allJourneys', JSON.stringify(updatedJourneys.filter(j => j !== null)));
 
+      await fetchServerJourneys();
       setIsUploading(null);
     } catch (error) {
       console.error('Error uploading journey:', error);
@@ -292,26 +307,29 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   };
 
-  const renderJourneyCards = (journeys: (Journey | null)[], isLocal: boolean) => {
-    return journeys.filter((journey): journey is Journey => journey !== null).map((journey, index) => {
+  const renderJourneyCards = (journeys: Journey[], isLocal: boolean) => {
+    return journeys.map((journey, index) => {
+      if (journey === null) {
+        return null; // Skip null journeys since they're corrupted
+      }
       let positions: [number, number][] = [];
-      try {
-        positions = journey.positions.map(pos => [pos.latitude, pos.longitude]);
-      } catch (error) {
-        console.error('Error parsing positions:', error);
+      if (!journey.isCorrupted) {
+        try {
+          positions = journey.positions.map(pos => [pos.latitude, pos.longitude]);
+        } catch (error) {
+          console.error('Error parsing positions:', error);
+        }
       }
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
 
-      const isCorrupted = positions.length === 0;
-
-      return (
+        return (
         <IonCol key={isLocal ? index : journey.id} size="12" size-md="6">
           <IonCard>
             <IonCardHeader>
               <IonCardTitle>{isLocal ? `Local Journey ${index + 1}` : `Server Journey ${journey.id}`}</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
-              {isCorrupted ? (
+              {journey.isCorrupted ? (
                 <div>
                   <IonText color="danger">
                     <h2>Corrupted Journey</h2>
@@ -333,7 +351,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               >
                 Delete
               </IonButton>
-              {isLocal && !isCorrupted && (
+              {isLocal && !journey.isCorrupted && (
                 <IonButton
                   fill="solid"
                   color="primary"
@@ -347,7 +365,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
           </IonCard>
         </IonCol>
       );
-    });
+    }).filter(Boolean); // null entries should be removed here
   };
 
   if (!user) {
@@ -401,12 +419,12 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                 <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
                 <h2>Previous Journeys</h2>
               </IonText>
-              <IonGrid>
+
+             <IonGrid>
                 <IonRow>
                   {renderJourneyCards(journeys, true)}
                 </IonRow>
-              </IonGrid>
-              {isLoading ? (
+              </IonGrid> {isLoading ? (
                 <IonSpinner />
               ) : (
                 <IonGrid>
