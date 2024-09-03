@@ -110,22 +110,38 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
         startTime: new Date(journey.journey_start).getTime(),
         endTime: new Date(journey.journey_finish).getTime(),
         duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
-        positions: journey.locations.map(loc => {
-          if (typeof loc.location === 'string' && loc.location.includes('(')) {
-            const [lon, lat] = loc.location.substring(
-              loc.location.indexOf('(') + 1,
-              loc.location.indexOf(')')
-            ).split(' ');
-            return {
-              latitude: parseFloat(lat),
-              longitude: parseFloat(lon),
-              timestamp: new Date(loc.location_time).getTime()
-            };
-          } else {
-            console.error('Unexpected location format:', loc.location);
-            return null;
-          }
-        }).filter(pos => pos !== null)
+        positions: journey.locations
+          .filter(loc => loc && loc.location && typeof loc.location === 'string')
+          .map(loc => {
+            try {
+            /* FIXME: To whoever will work on this in the future, we changed the database from PostGIS' 'location' format
+             *   to text since we were having trouble with the Well-Known Binary (WKB) format Postgres was returning.
+             *   We tried 'common' libraries such as 'simple-features-wkb-js', 'wellknown', 'wkx' and none of them worked
+             *   for me for various different reasons.
+             *   The uploading section is unchanged so if you ever in the future want to change it back, from this comment
+             *   to the 'else' statement is all you *should* need to adapt to make it work.
+             *   Good luck. o7
+             */
+
+            // const match = loc.location.match(/POINT\((-?\d+\.?\d*)\s+(-?\d+\.?\d*)\)/); // unga bunga i fucking hate regex
+            // if (match) {
+            //   return {
+            //     latitude: parseFloat(match[2]),
+            //     longitude: parseFloat(match[1]),
+            //     timestamp: new Date(loc.location_time).getTime()
+            //   };
+            const [lon, lat] = loc.location.slice(6, -1).split(' ');
+              return {
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lon),
+                timestamp: new Date(loc.location_time).getTime()
+              };
+            } catch (error) {
+              console.error('Error parsing location:', loc.location, error);
+              return null;
+            }
+          })
+          .filter(pos => pos !== null)
       }));
 
       setServerJourneys(formattedJourneys);
@@ -253,6 +269,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       const positions: [number, number][] = journey.positions.map(pos => [pos.latitude, pos.longitude]);
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
 
+      const isCorrupted = positions.length === 0;
+
       return (
         <IonCol key={isLocal ? index : journey.id} size="12" size-md="6">
           <IonCard>
@@ -260,11 +278,21 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               <IonCardTitle>{isLocal ? `Local Journey ${index + 1}` : `Server Journey ${journey.id}`}</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
-              <JourneyMap positions={positions} />
-              <ul>
-                <li>Time: {new Date(journey.startTime).toLocaleString()}</li>
-                <li>Duration: {durationInMinutes} minutes</li>
-              </ul>
+              {isCorrupted ? (
+                <div>
+                  <IonText color="danger">
+                    <h2>Corrupted Journey</h2>
+                  </IonText>
+                </div>
+              ) : (
+                <>
+                  <JourneyMap positions={positions} />
+                  <ul>
+                    <li>Time: {new Date(journey.startTime).toLocaleString()}</li>
+                    <li>Duration: {durationInMinutes} minutes</li>
+                  </ul>
+                </>
+              )}
               <IonButton
                 fill="solid"
                 color="danger"
@@ -272,7 +300,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               >
                 Delete
               </IonButton>
-              {isLocal && (
+              {isLocal && !isCorrupted && (
                 <IonButton
                   fill="solid"
                   color="primary"
