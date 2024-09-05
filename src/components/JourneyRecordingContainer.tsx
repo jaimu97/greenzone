@@ -14,8 +14,9 @@ import {
 import { Geolocation, Position } from '@capacitor/geolocation';
 import JourneyMap from './JourneyMap';
 
+// props for this component
 interface JourneyRecordingProps {
-  onEndJourney: () => void;
+  onEndJourney: () => void; // function is called when the journey ends
 }
 
 // Documentation: https://ionicframework.com/docs/native/geolocation
@@ -27,6 +28,36 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [journeyStartTime, setJourneyStartTime] = useState<number | null>(null);
 
+  /* This approach to lifecycle management using useEffect is more 'flexible' than the older class-based lifecycle
+   * methods I've seen online.
+   *
+   * It allows the app to group related code together (like setting up and tearing down a subscription) rather than
+   * splitting it across different lifecycle methods.
+   *
+   * Basically, when the component is first rendered (mounted), the code inside the useEffect hook runs.
+   *
+   * Normally, useEffect would run after every render if the dependency array (the second argument) changes.
+   * In this case, we have an empty dependency array [], so the effect only runs once when the component mounts.
+   * If we had state variables in the dependency array, the effect would run whenever those variables change, similar to
+   * 'componentDidUpdate' (don't use) in class components.
+   *
+   * Inside the effect, we update various state variables (setCurrentPosition, setPositions, etc.).
+   * Each of these state updates will cause the component to re-render, but won't re-run this effect due to the empty
+   * dependency array.
+   *
+   * Then finally the cleanup function basically ensures that we don't continue to watch the user's position after the
+   * component is no longer in use, preventing unnecessary background processes.
+   *
+   * See here: https://react.dev/reference/react/Component
+   * "For many use cases, defining componentDidMount, componentDidUpdate, and componentWillUnmount together in class
+   * components is equivalent to calling useEffect in function components. In the rare cases where it’s important for
+   * the code to run before browser paint, useLayoutEffect is a closer match."
+   *
+   * OR TL;DR, this useEffect is like a Swiss Army knife for managing when shit happens, it sets things up, keeps an
+   * eye on changes, and cleans up after itself when it's done
+   */
+
+  // useEffect hook for component lifecycle management, basically function runs after the component is added to the DOM
   useEffect(() => {
     checkPermissions();
     startJourney();
@@ -46,12 +77,13 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
 
     startWatching();
 
+    // cleanup function runs when the component will unmount (be removed from the DOM)
     return () => {
       if (watchId) {
         Geolocation.clearWatch({ id: watchId });
       }
     };
-  }, []);
+  }, []); // Empty dependency array means this effect runs once on mount
 
   const checkPermissions = async () => {
     const status = await Geolocation.checkPermissions();
@@ -82,10 +114,13 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       const journeyDuration = journeyEndTime - journeyStartTime;
 
       const formatWithOffset = (timestamp: number) => {
-        /* *definitely* not the right way to do this, but needed to 'force' darwin time into the database so when
-         * we reconstruct the green zones, it'll always have darwin time. could also do this in the reconstruction
-         * but seems like the better way is to do it here and if there are ever more green zones outside the NT,
-         * you can just replace this with a function with an insert of the timezone it was taken in instead
+        /* Definitely not the right way to do this, but needed to 'force' darwin time into the database so when
+         * we reconstruct the green zones, it'll always have darwin time.
+         *
+         * We could also do this in the reconstruction but seems like the better way is to do it here and if there are
+         * ever more green zones outside the NT, you can just replace this with a function with an insert of the
+         * timezone it was taken in instead.
+         *
          * ¯\_(ツ)_/¯
          */
         return new Date(timestamp).toISOString().replace('Z', '+09:30'); // Z = UTC Time (Zulu Time)
@@ -96,6 +131,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
         endTime: formatWithOffset(journeyEndTime),
         duration: journeyDuration,
         positions: JSON.parse(localStorage.getItem('currentJourney') || '[]').map((pos: any) => ({
+          // Positions are stored as 'POINT(lng lat)'
           latitude: parseFloat(pos.location.split(' ')[1].slice(0, -1)), // split after space and remove -1 = ')'
           longitude: parseFloat(pos.location.split(' ')[0].slice(6)), // before space, remove 6 = 'POINT('
           timestamp: pos.timestamp,
