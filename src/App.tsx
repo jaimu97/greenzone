@@ -17,12 +17,6 @@ import { home,
 } from 'ionicons/icons';
 import { supabase } from './supabaseClient';
 
-/* TODO: https://ionicframework.com/docs/react/platform
- *   Change what the third tab button does depending on what platform the user is on.
- *   For android, it should show the Journey button and give them the ability to record it.
- *   On desktop, it should show them an overview. Possibly also an admin panel too.
- *   (This change should also replace the icon of the button.)
- */
 import JourneyPage from './pages/JourneyPage';
 import HomeTab from "./pages/HomeTab";
 import MapTab from "./pages/MapTab";

@@ -66,10 +66,6 @@ const AccountTab: React.FC<TabProps> = ({ user }) => {
     return <IonSpinner />;
   }
 
-  /* TODO: Replace this account data with a page that lets you edit the information and set things like a user icon?
-       Right now, I am just using some of the output fields you get when you run 'select * from auth.users' in
-       the supabase SQL Editor panel.
-   */
   return (
     <IonPage>
       <IonHeader>

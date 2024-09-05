@@ -7,10 +7,6 @@ import 'leaflet/dist/leaflet.css';
 const LeafletContainer: React.FC = () => {
   const mapRef = useRef<any>(null);
 
-  /* TODO: If possible with the time we have, map the temperature of the zones to the colour.
-   *   For example; 40c is red and 24c is green. Could be possible to split the polygon into smaller sub-sections
-   *   too. This leaflet framework seems pretty flexible.
-   */
   const hotZone = { color: 'red' }
   const warmZone = { color: 'orange' }
   const coolZone = { color: 'green' }
