@@ -23,17 +23,8 @@ import JourneyMap from '../components/JourneyMap';
 import { supabase } from '../supabaseClient'
 
 interface JourneyPageProps {
-  // TODO: Filter user role and change page to different options. (Admin has all uploaded journeys for example)
   user: any;
 }
-
-/* TODO: Admin page
- *  - Paths people are taking
- *  - See if people have been commenting on plants & who has accessed them.
- *  -
- * TODO: User page
- *  - Heatmap of where users are spending most of their time.
- */
 
 
 // localstorage journey
@@ -123,16 +114,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
             endTime: new Date(journey.journey_finish).getTime(),
             duration: new Date(journey.journey_finish).getTime() - new Date(journey.journey_start).getTime(),
             positions: journey.locations
-              .filter(loc => loc && loc.location && typeof loc.location === 'string')
+              .filter(loc => loc && loc.location && true)
               .map(loc => {
-                /* FIXME: To whoever will work on this in the future, we changed the database from PostGIS' 'location' format
-                 *   to text since we were having trouble with the Well-Known Binary (WKB) format Postgres was returning.
-                 *   We tried 'common' libraries such as 'simple-features-wkb-js', 'wellknown', 'wkx' and none of them worked
-                 *   for me for various different reasons.
-                 *   The uploading section is unchanged so if you ever in the future want to change it back, from this comment
-                 *   to the 'else' statement is all you *should* need to adapt to make it work.
-                 *   Good luck. o7
-                 */
                 const [lon, lat] = loc.location.slice(6, -1).split(' ');
                 return {
                   latitude: parseFloat(lat),
