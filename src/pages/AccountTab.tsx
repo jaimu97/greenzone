@@ -19,6 +19,7 @@ import { supabase } from '../supabaseClient';
 import LoginContainer from '../components/account/LoginContainer';
 import SignupContainer from '../components/account/SignupContainer';
 
+// props interface for this component which is just the 'user' from App.tsx
 interface TabProps {
   user: any;
 }
@@ -32,6 +33,7 @@ const AccountTab: React.FC<TabProps> = ({ user }) => {
     const fetchProfile = async () => {
       if (user) {
         try {
+          // Get profile data from Supabase
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -75,6 +77,7 @@ const AccountTab: React.FC<TabProps> = ({ user }) => {
       </IonHeader>
       <IonContent className="ion-padding">
         {user ? (
+          // If user is logged in, show profile information
           <IonCard>
             <IonCardHeader>
               <IonCardTitle>User Profile (Placeholder)</IonCardTitle>
@@ -140,6 +143,7 @@ const AccountTab: React.FC<TabProps> = ({ user }) => {
             </IonCardContent>
           </IonCard>
         ) : (
+          // If user is not logged in, show login or signup form
           <>
             {showLogin ? <LoginContainer /> : <SignupContainer />}
             <IonButton type="button" expand="block" fill="clear" onClick={toggleLoginSignup}>

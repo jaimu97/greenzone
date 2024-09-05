@@ -18,10 +18,16 @@ interface HomeContainerProps {
   user: any;
 }
 
+/* HomeContainer component: Main content for the Home page
+ * - Fetches and displays user profile information
+ * - Renders welcome message and action cards
+ */
+
 const HomeContainer: React.FC<HomeContainerProps> = ({ user }) => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch user profile data from Supabase
   useEffect(() => {
     const fetchProfile = async () => {
       if (user) {

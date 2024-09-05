@@ -26,7 +26,10 @@ interface JourneyPageProps {
   user: any;
 }
 
-
+/* These interfaces define the structure of Journey objects. Interfaces are objects but only for type checking and are
+ * 'compiled out' from the project when it is rendered. See here for someone not as monkey as me explaining it:
+ * https://stackoverflow.com/questions/51716808/when-use-a-interface-or-class-in-typescript
+ */
 // localstorage journey
 interface Journey {
   id?: number; // Not used on local journeys, just need it or get a TS2339 error: `Property 'id' does not exist on type 'Journey'.`
@@ -47,20 +50,26 @@ interface ServerJourney {
 }
 
 const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
+  /* State variables using React's useState hook
+   * Each const below creates a state variable and its setter function
+   */
   const [isRecording, setIsRecording] = useState(false);
-  const [journeys, setJourneys] = useState<(Journey)[]>([]);
+  const [journeys, setJourneys] = useState<(Journey)[]>([]); // Array of local journeys
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [journeyToDelete, setJourneyToDelete] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState<number | null>(null);
-  const [serverJourneys, setServerJourneys] = useState<Journey[]>([]);
+  const [serverJourneys, setServerJourneys] = useState<Journey[]>([]); // Array of server journeys
   const [isLoading, setIsLoading] = useState(true);
 
+  // useEffect hook runs after component mounts or when dependencies change
   useEffect(() => {
     console.log('Current user:', user);
     loadJourneysFromLocalStorage();
     fetchServerJourneys();
     console.log('Loaded journeys:', journeys);
-  }, [user]);
+  }, [user]); // This effect runs when the user prop changes
+
+  // Rest of the function names should explain more or less what they do.
 
   const loadJourneysFromLocalStorage = () => {
     const storedJourneys = localStorage.getItem('allJourneys');

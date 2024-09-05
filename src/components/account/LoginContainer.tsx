@@ -29,12 +29,14 @@ const LoginContainer: React.FC = () => {
       return;
     }
 
+    // Attempt to sign in user with Supabase
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         setShowToast(error.message);
       } else if (data?.user) {
+        // Login successful, don't need to do anything as App.tsx will handle the state change
       } else {
         setShowToast('Oops! Something went wrong. Check the console.');
         console.error('Unexpected response:', data);
