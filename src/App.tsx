@@ -59,6 +59,12 @@ const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  /*
+   * Effect hook to handle user authentication
+   * - Fetches the current user on component load (mount)
+   * - Sets up a listener for auth state changes
+   * - and then updates the user state and loading state
+   */
   useEffect(() => {
     const fetchUser = async () => {
       const {data: {user}} = await supabase.auth.getUser();
@@ -78,6 +84,7 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Shows a loading spinner while grabbing user data
   if (loading) {
     return (
       <IonApp>
@@ -88,11 +95,21 @@ const App: React.FC = () => {
     );
   }
 
+  /*
+   * Main app structure using Ionic components:
+   * - IonReactRouter = routing to other parts ot the app
+   * - IonTabs = tab-based navigation
+   * - IonTabBar = the bottom tab navigation bar
+   * - IonRouterOutlet = rendering different pages based on the current route
+   */
   return (
     <IonApp>
       <IonReactRouter>
         <IonTabs>
           <IonRouterOutlet>
+            {/* Define routes for different tabs
+              * Also passes the user object to components that need it for authentication
+              */}
             <Route exact path="/tabs/home">
               <HomeTab user={user}/>
             </Route>
@@ -105,6 +122,7 @@ const App: React.FC = () => {
             <Route path="/tabs/account">
               <AccountTab user={user}/>
             </Route>
+            {/* Redirect routes if people type forgor or type the url in wrong */}
             <Route exact path="/tabs">
               <Redirect to="/tabs/home"/>
             </Route>
@@ -112,6 +130,7 @@ const App: React.FC = () => {
               <Redirect to="/tabs/home"/>
             </Route>
           </IonRouterOutlet>
+          {/* Bottom tab bar */}
           <IonTabBar slot="bottom">
             <IonTabButton tab="home" href="/tabs/home">
               <IonIcon aria-hidden="true" icon={home}/>
