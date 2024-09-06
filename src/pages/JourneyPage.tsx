@@ -20,6 +20,7 @@ import {
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
+import JourneyUploadContainer from '../components/JourneyUploadContainer';
 import { supabase } from '../supabaseClient'
 
 interface JourneyPageProps {
@@ -60,6 +61,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [serverJourneys, setServerJourneys] = useState<Journey[]>([]); // Array of server journeys
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // Modal dialog for the csv kestel uploader
 
   // useEffect hook runs after component mounts or when dependencies change
   useEffect(() => {
@@ -272,7 +274,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
       const locationInserts = journey.positions.map(pos => ({
         journey_id: journeyData.id,
-        // POINT(lat lng): https://www.crunchydata.com/blog/postgis-and-the-geography-type
+        // POINT(lng lat): https://www.crunchydata.com/blog/postgis-and-the-geography-type
         location: `POINT(${pos.longitude} ${pos.latitude})`,
         location_time: new Date(pos.timestamp).toISOString()
       }));
@@ -414,7 +416,17 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               </div>
               <IonText>
                 <h2>Record a Journey</h2>
-                <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
+              </IonText>
+              <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
+
+              <IonText>
+                <h2>Upload Kestrel Data</h2>
+              </IonText>
+              <IonButton expand="block" size="large" onClick={() => setIsUploadModalOpen(true)}>
+                Upload Kestrel Data
+              </IonButton>
+
+              <IonText>
                 <h2>Previous Journeys</h2>
               </IonText>
               <IonGrid>
@@ -427,6 +439,11 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
           )}
         </div>
       </IonContent>
+      <JourneyUploadContainer
+        user={user}
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+      />
       <IonAlert
         isOpen={showDeleteAlert}
         onDidDismiss={() => setShowDeleteAlert(false)}
