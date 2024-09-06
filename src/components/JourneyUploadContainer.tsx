@@ -31,7 +31,8 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
           const deviceModel = results.data[1][1];
           const serialNumber = results.data[2][1];
 
-          // Insert the kestrel device
+          console.log('Device Info:', { deviceName, deviceModel, serialNumber });
+
           const { data: deviceData, error: deviceError } = await supabase
             .from('kestrel_devices')
             .insert({
@@ -45,29 +46,40 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
 
           if (deviceError) throw deviceError;
 
-          // then insert the kestrel info
-          const kestrelData = results.data.slice(5).map((row: any) => ({
-            kestrel_device_id: deviceData.id,
-            time_stamp: row[0],
-            temperature: parseFloat(row[1]),
-            relative_humidity: parseFloat(row[2]),
-            heat_index: parseFloat(row[3]),
-            dew_point: parseFloat(row[4]),
-            data_type: row[5] || null,
-            record_name: row[6] || null,
-            start_time: row[7] || null,
-            duration: row[8] || null,
-            location_description: row[9] || null,
-            location_address: row[10] || null,
-            location_coordinates: row[11] ? `POINT(${row[11]})` : null,
-            notes: row[12] || null
-          }));
+          console.log('Inserted device:', deviceData);
 
-          const { error: kestrelError } = await supabase
+          // then insert the kestrel info
+          const kestrelData = results.data.slice(5).map((row: string[]) => {
+            const dataPoint = {
+              kestrel_device_id: deviceData!.id,
+              time_stamp: row[0],
+              temperature: parseFloat(row[1]),
+              relative_humidity: parseFloat(row[2]),
+              heat_index: parseFloat(row[3]),
+              dew_point: parseFloat(row[4]),
+              data_type: row[5] || null,
+              record_name: row[6] || null,
+              start_time: row[7] || null,
+              duration: row[8] || null,
+              location_description: row[9] || null,
+              location_address: row[10] || null,
+              location_coordinates: row[11] ? `POINT(${row[11]})` : null,
+              notes: row[12] || null
+            };
+            console.log('Data point:', dataPoint);
+            return dataPoint;
+          });
+
+          console.log('Kestrel data to insert:', kestrelData);
+
+          const { data: insertedData, error: kestrelError } = await supabase
             .from('kestrel_info')
-            .insert(kestrelData);
+            .insert(kestrelData)
+            .select();
 
           if (kestrelError) throw kestrelError;
+
+          console.log('Inserted kestrel data:', insertedData);
 
           setUploadStatus('Data uploaded successfully!');
         } catch (error) {
