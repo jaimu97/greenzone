@@ -23,17 +23,21 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
     setUploadStatus('Parsing file...');
 
     Papa.parse(file, {
-      complete: async (results) => {
+      complete: async (results: Papa.ParseResult<string[]> /* for "TS2571: Object is of type 'unknown'." */) => {
         setUploadStatus('File parsed. Uploading data...');
         try {
           // insert the kestrel device table data
+          const deviceName = results.data[0][1];
+          const deviceModel = results.data[1][1];
+          const serialNumber = results.data[2][1];
+
+          // Insert the kestrel device
           const { data: deviceData, error: deviceError } = await supabase
             .from('kestrel_devices')
             .insert({
-              // type assertions are because I was getting: "TS2571: Object is of type 'unknown'."
-              device_name: (results.data as any[][])[0][1] as string,
-              device_model: (results.data as any[][])[0][1] as string,
-              serial_number: (results.data as any[][])[1][1] as string,
+              device_name: deviceName,
+              device_model: deviceModel,
+              serial_number: serialNumber,
               profile_id: user.id
             })
             .select()
@@ -42,7 +46,7 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
           if (deviceError) throw deviceError;
 
           // then insert the kestrel info
-          const kestrelData = results.data.slice(3).map((row: any) => ({
+          const kestrelData = results.data.slice(5).map((row: any) => ({
             kestrel_device_id: deviceData.id,
             time_stamp: row[0],
             temperature: parseFloat(row[1]),
@@ -71,7 +75,7 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
           setUploadStatus('Error uploading data. Please try again.');
         }
       },
-      header: true,
+      header: false,
       skipEmptyLines: true
     });
   };
@@ -84,7 +88,7 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
-        <input type="file" onChange={handleFileUpload} style={{ display: 'none' }} id="fileInput" />
+        <input type="file" accept=".csv" onChange={handleFileUpload} style={{ display: 'none' }} id="fileInput" />
         <IonButton expand="block" onClick={() => document.getElementById('fileInput')?.click()}>
           Select CSV File
         </IonButton>
