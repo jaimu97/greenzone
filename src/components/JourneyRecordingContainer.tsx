@@ -19,17 +19,18 @@ import FeedbackModal from "./FeedbackModal";
 interface JourneyRecordingProps {
   onEndJourney: () => void; // function is called when the journey ends
   user: any;
+  journeyId: number; // for passing to feedback modal
 }
 
 // Documentation: https://ionicframework.com/docs/native/geolocation
 
-const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney, user }) => {
+const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney, user, journeyId }) => {
   const [currentPosition, setCurrentPosition] = useState<Position | null>(null);
   const [positions, setPositions] = useState<[number, number][]>([]);
   const [permissionStatus, setPermissionStatus] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [journeyStartTime, setJourneyStartTime] = useState<number | null>(null);
-  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // feebdack modal
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // feedback modal
 
   /* This approach to lifecycle management using useEffect is more 'flexible' than the older class-based lifecycle
    * methods I've seen online.
@@ -210,6 +211,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
         userId={user.id}
+        journeyId={journeyId}
       />
     </>
   );

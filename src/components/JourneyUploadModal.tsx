@@ -113,7 +113,7 @@ const JourneyUploadModal: React.FC<JourneyUploadContainerProps> = ({ user, isOpe
             <p>{uploadStatus}</p>
           </IonText>
         )}
-        <IonButton expand="block" onClick={onClose} className="ion-margin-top">Close</IonButton>
+        <IonButton color="medium" expand="block" onClick={onClose} className="ion-margin-top">Close</IonButton>
       </IonContent>
     </IonModal>
   );
