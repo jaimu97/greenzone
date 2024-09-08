@@ -406,7 +406,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       <IonContent fullscreen>
         <div className="ion-padding">
           {isRecording ? (
-            <JourneyRecording onEndJourney={endJourney} />
+            <JourneyRecording onEndJourney={endJourney} user={user}/>
           ) : (
             <>
               <div className="ion-text-center home-container">

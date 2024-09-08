@@ -13,20 +13,23 @@ import {
 } from '@ionic/react';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import JourneyMap from './JourneyMap';
+import FeedbackModal from "./FeedbackModal";
 
 // props for this component
 interface JourneyRecordingProps {
   onEndJourney: () => void; // function is called when the journey ends
+  user: any;
 }
 
 // Documentation: https://ionicframework.com/docs/native/geolocation
 
-const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney }) => {
+const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney, user }) => {
   const [currentPosition, setCurrentPosition] = useState<Position | null>(null);
   const [positions, setPositions] = useState<[number, number][]>([]);
   const [permissionStatus, setPermissionStatus] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [journeyStartTime, setJourneyStartTime] = useState<number | null>(null);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // feebdack modal
 
   /* This approach to lifecycle management using useEffect is more 'flexible' than the older class-based lifecycle
    * methods I've seen online.
@@ -197,17 +200,17 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       <IonGrid className="ion-padding-top">
         <IonRow>
           <IonCol>
-            <IonButton expand="block" color="primary">
+            <IonButton expand="block" color="primary" onClick={() => setIsFeedbackModalOpen(true)}>
               Add feedback
-            </IonButton>
-          </IonCol>
-          <IonCol>
-            <IonButton expand="block" color="primary">
-              Add image
             </IonButton>
           </IonCol>
         </IonRow>
       </IonGrid>
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        userId={user.id}
+      />
     </>
   );
 };
