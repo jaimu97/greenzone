@@ -7,7 +7,9 @@ import {
   IonText,
   IonToast,
   IonLoading,
-  IonIcon
+  IonIcon,
+  IonSelect,
+  IonSelectOption
 } from '@ionic/react';
 import { lockClosedOutline, mailOutline, peopleOutline, personOutline } from "ionicons/icons";
 import { supabase } from '../../supabaseClient';
@@ -21,6 +23,7 @@ const SignupContainer: React.FC = () => {
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
+  const [typeOfUser, setTypeOfUser] = useState('');
   const [showLoading, setShowLoading] = useState(false);
   const [showToast, setShowToast] = useState<string | undefined>(undefined);
 
@@ -59,7 +62,8 @@ const SignupContainer: React.FC = () => {
           username,
           first_name: firstName,
           surname,
-          full_name: fullname
+          full_name: fullname,
+          User_Type: typeOfUser
         })
         .eq('id', data.user.id);
 
@@ -117,6 +121,21 @@ const SignupContainer: React.FC = () => {
             value={surname}
             onIonChange={(e) => setSurname(e.detail.value!)}
           />
+        </IonItem>
+        <IonItem>
+          <IonIcon icon={peopleOutline} slot="start" />
+          <IonSelect 
+            label="Type of User" 
+            placeholder="Select"
+            onIonChange={(e) => {
+              console.log("User Type:", e.detail.value);
+              setTypeOfUser(e.detail.value!)
+              console.log(typeOfUser)
+            }}
+          >
+            <IonSelectOption value="patient">Patient</IonSelectOption>
+            <IonSelectOption value="staff">Staff</IonSelectOption>
+          </IonSelect>
         </IonItem>
         <IonItem>
           <IonIcon icon={lockClosedOutline} slot="start" />
