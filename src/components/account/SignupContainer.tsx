@@ -127,14 +127,13 @@ const SignupContainer: React.FC = () => {
           <IonSelect 
             label="Type of User" 
             placeholder="Select"
-            onIonChange={(e) => {
-              console.log("User Type:", e.detail.value);
+            onIonChange={(e) => 
               setTypeOfUser(e.detail.value!)
-              console.log(typeOfUser)
-            }}
+            }
           >
-            <IonSelectOption value="patient">Patient</IonSelectOption>
-            <IonSelectOption value="staff">Staff</IonSelectOption>
+            <IonSelectOption value="Patient">Patient</IonSelectOption>
+            <IonSelectOption value="Staff">Staff</IonSelectOption>
+            <IonSelectOption value="Visitor">Visitor</IonSelectOption>
           </IonSelect>
         </IonItem>
         <IonItem>
