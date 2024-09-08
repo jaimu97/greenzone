@@ -20,7 +20,7 @@ import {
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
-import JourneyUploadContainer from '../components/JourneyUploadContainer';
+import JourneyUploadModal from '../components/JourneyUploadModal';
 import { supabase } from '../supabaseClient'
 
 interface JourneyPageProps {
@@ -439,7 +439,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
           )}
         </div>
       </IonContent>
-      <JourneyUploadContainer
+      <JourneyUploadModal
         user={user}
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}

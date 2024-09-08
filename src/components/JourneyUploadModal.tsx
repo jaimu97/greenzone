@@ -13,7 +13,7 @@ interface JourneyUploadContainerProps {
   onClose: () => void;
 }
 
-const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, isOpen, onClose }) => {
+const JourneyUploadModal: React.FC<JourneyUploadContainerProps> = ({ user, isOpen, onClose }) => {
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [isError, setIsError] = useState<boolean>(false);
 
@@ -119,4 +119,4 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
   );
 };
 
-export default JourneyUploadContainer;
+export default JourneyUploadModal;
