@@ -15,12 +15,14 @@ interface JourneyUploadContainerProps {
 
 const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, isOpen, onClose }) => {
   const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [isError, setIsError] = useState<boolean>(false);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploadStatus('Parsing file...');
+    setIsError(false);
 
     Papa.parse(file, {
       complete: async (results: Papa.ParseResult<string[]> /* for "TS2571: Object is of type 'unknown'." */) => {
@@ -82,9 +84,11 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
           console.log('Inserted kestrel data:', insertedData);
 
           setUploadStatus('Data uploaded successfully!');
+          setIsError(false);
         } catch (error) {
           console.error('Error uploading data:', error);
           setUploadStatus('Error uploading data. Please try again.');
+          setIsError(true);
         }
       },
       header: false,
@@ -104,7 +108,11 @@ const JourneyUploadContainer: React.FC<JourneyUploadContainerProps> = ({ user, i
         <IonButton expand="block" onClick={() => document.getElementById('fileInput')?.click()}>
           Select CSV File
         </IonButton>
-        {uploadStatus && <IonText color="primary">{uploadStatus}</IonText>}
+        {uploadStatus && (
+          <IonText color={isError ? "danger" : "primary"} className="ion-text-center">
+            <p>{uploadStatus}</p>
+          </IonText>
+        )}
         <IonButton expand="block" onClick={onClose} className="ion-margin-top">Close</IonButton>
       </IonContent>
     </IonModal>
