@@ -51,14 +51,17 @@ const SignupContainer: React.FC = () => {
 
     if (data.user) {
       // If signup successful, create a profile in the profiles table
+      const fullname = firstName + " " + surname;
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .update({
           id: data.user.id,
           username,
           first_name: firstName,
           surname,
-        });
+          full_name: fullname
+        })
+        .eq('id', data.user.id);
 
       if (profileError) throw profileError;
     }
