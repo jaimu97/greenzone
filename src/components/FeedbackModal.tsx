@@ -33,7 +33,13 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId }
       });
 
       if (image.base64String) {
-        setCapturedImage(`image.format};base64,${image.base64String}`);
+        /* '${}' = template literal
+         * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals
+         * Basically, here:
+         * ${image.format} will be replaced with the image format (e.g., "jpeg" or "png")
+         * ${image.base64String} will come into your house and tilt a photo frame by 2 degrees.
+         */
+        setCapturedImage(`data:image/${image.format};base64,${image.base64String}`);
       }
     } catch (error) {
       console.error('Error taking photo:', error);
