@@ -19,12 +19,11 @@ import FeedbackModal from "./FeedbackModal";
 interface JourneyRecordingProps {
   onEndJourney: () => void; // function is called when the journey ends
   user: any;
-  journeyId: number; // for passing to feedback modal
 }
 
 // Documentation: https://ionicframework.com/docs/native/geolocation
 
-const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney, user, journeyId }) => {
+const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney, user }) => {
   const [currentPosition, setCurrentPosition] = useState<Position | null>(null);
   const [positions, setPositions] = useState<[number, number][]>([]);
   const [permissionStatus, setPermissionStatus] = useState<any>(null);
@@ -211,7 +210,6 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
         userId={user.id}
-        journeyId={journeyId}
       />
     </>
   );
