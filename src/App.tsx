@@ -16,6 +16,10 @@ import { home,
   personCircleOutline
 } from 'ionicons/icons';
 import { supabase } from './supabaseClient';
+/* Supabase Ionic tutorial is out of date and asks for 'index.tsx', but we don't have one?
+ * Making changes here instead and hoping it still functions the same.
+ */
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
 
 import JourneyPage from './pages/JourneyPage';
 import HomeTab from "./pages/HomeTab";
@@ -154,5 +158,7 @@ const App: React.FC = () => {
     </IonApp>
   );
 };
+
+defineCustomElements(window); // don't know where to put this in comparison to 'index.tsx'.
 
 export default App;
