@@ -285,7 +285,32 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
       if (locationError) throw locationError;
 
-      console.log('Journey uploaded successfully!')
+      console.log('Attempting to insert feedback for journey:', journeyData.id);
+      const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
+      const journeyFeedback = feedbackData.filter((fb: any) => fb.journeyId === journey.id);
+
+      if (journeyFeedback.length > 0) {
+        const feedbackInserts = journeyFeedback.map((fb: any) => ({
+          journey_id: journeyData.id, // need associated journey since it's a FK for this table.
+          user_id: user.id,
+          content: fb.content,
+          created_at: fb.timestamp
+        }));
+
+        const { error: feedbackError } = await supabase
+          .from('feedback')
+          .insert(feedbackInserts);
+
+        if (feedbackError) throw feedbackError;
+
+        console.log('Feedback uploaded successfully');
+
+        // remove feedback:
+        const remainingFeedback = feedbackData.filter((fb: any) => fb.journeyId !== journey.id);
+        localStorage.setItem('journeyFeedback', JSON.stringify(remainingFeedback));
+      }
+
+      console.log('Journey and shit uploaded successfully!');
 
       // remove from local storage:
       const updatedJourneys = journeys.filter((_, i) => i !== index);
