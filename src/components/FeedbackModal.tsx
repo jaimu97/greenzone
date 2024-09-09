@@ -41,7 +41,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId }
   };
 
   const handleSubmit = async () => {
-    if (feedback.trim()) {
+    if (feedback.trim()) { // trim removes spaces around text like this: "\n\t Feed, back. " becomes "Feed, back."
       const feedbackData = {
         content: feedback,
         timestamp: new Date().toISOString(),
@@ -49,6 +49,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId }
         userId: userId
       };
 
+      // saving it to localstorage and sending it to supabase later.
       const existingFeedback = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
       existingFeedback.push(feedbackData);
       localStorage.setItem('journeyFeedback', JSON.stringify(existingFeedback));
