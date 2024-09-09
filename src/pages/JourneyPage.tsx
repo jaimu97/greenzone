@@ -20,7 +20,7 @@ import {
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
-import JourneyUploadModal from '../components/JourneyUploadModal';
+import KestrelUploadModal from '../components/KestrelUploadModal';
 import { supabase } from '../supabaseClient'
 
 interface JourneyPageProps {
@@ -464,7 +464,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
           )}
         </div>
       </IonContent>
-      <JourneyUploadModal
+      <KestrelUploadModal
         user={user}
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
