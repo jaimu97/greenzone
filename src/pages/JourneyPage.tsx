@@ -22,6 +22,7 @@ import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
 import KestrelUploadModal from '../components/KestrelUploadModal';
 import { supabase } from '../supabaseClient'
+import { Buffer } from 'buffer'; // https://www.npmjs.com/package/buffer
 
 interface JourneyPageProps {
   user: any;
@@ -62,6 +63,18 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [serverJourneys, setServerJourneys] = useState<Journey[]>([]); // Array of server journeys
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // Modal dialog for the csv kestel uploader
+
+  function decode(base64String: string): Uint8Array {
+    /* Basically takes the base64 and converts it back to an image for supabase, since for *whatever* reason we can't
+     * just send the base64 form to the db. -_-
+     * A bit annoying since there's only a method for getting it into base64 built in to the capture:
+     * resultType: CameraResultType.Base64
+     * yet, we need this to get it back to a normal format.
+     * TODO: Save the image to the device without converting to base64 but keep it referenced for uploading?
+     *   (if possible)
+     */
+    return Buffer.from(base64String, 'base64');
+  }
 
   // useEffect hook runs after component mounts or when dependencies change
   useEffect(() => {
@@ -290,27 +303,68 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       const journeyFeedback = feedbackData.filter((fb: any) => fb.journeyId === journey.id);
 
       if (journeyFeedback.length > 0) {
-        const feedbackInserts = journeyFeedback.map((fb: any) => ({
-          journey_id: journeyData.id, // need associated journey since it's a FK for this table.
-          user_id: user.id,
-          content: fb.content,
-          created_at: fb.timestamp
-        }));
+        for (const fb of journeyFeedback) {
+          let mediaUrl = null;
 
-        const { error: feedbackError } = await supabase
-          .from('feedback')
-          .insert(feedbackInserts);
+          // upload thge image if it exists
+          if (fb.image) {
+            const imageName = `${user.id}_${Date.now()}.jpg`;
+            const imageData = decode(fb.image.split(',')[1]);
 
-        if (feedbackError) throw feedbackError;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('feedback-images')
+              .upload(imageName, imageData, {
+                contentType: 'image/jpeg'
+              });
 
-        console.log('Feedback uploaded successfully');
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('feedback-images')
+              .getPublicUrl(imageName);
+
+            mediaUrl = publicUrl;
+          }
+
+          // insert the feedback
+          const { data: feedbackInsert, error: feedbackError } = await supabase
+            .from('feedback')
+            .insert({
+              journey_id: journeyData.id, // need associated journey since it's a FK for this table.
+              user_id: user.id,
+              content: fb.content,
+              created_at: fb.timestamp,
+              media_url: mediaUrl
+            })
+            .select()
+            .single();
+
+          if (feedbackError) throw feedbackError;
+
+          // insert media record if image was uploaded
+          if (mediaUrl) {
+            const { error: mediaError } = await supabase
+              .from('media')
+              .insert({
+                user_id: user.id,
+                feedback_id: feedbackInsert.id,
+                media_url: mediaUrl,
+                created_at: new Date().toISOString(),
+                description: 'Feedback image'
+              });
+
+            if (mediaError) throw mediaError;
+          }
+        }
+
+        console.log('Feedback and media uploaded successfully');
 
         // remove feedback:
         const remainingFeedback = feedbackData.filter((fb: any) => fb.journeyId !== journey.id);
         localStorage.setItem('journeyFeedback', JSON.stringify(remainingFeedback));
       }
 
-      console.log('Journey and shit uploaded successfully!');
+      console.log('Journey, images and shit uploaded successfully!');
 
       // remove from local storage:
       const updatedJourneys = journeys.filter((_, i) => i !== index);
