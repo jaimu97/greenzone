@@ -70,6 +70,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
      * A bit annoying since there's only a method for getting it into base64 built in to the capture:
      * resultType: CameraResultType.Base64
      * yet, we need this to get it back to a normal format.
+     * https://supabase.com/docs/reference/javascript/storage-from-upload
      * TODO: Save the image to the device without converting to base64 but keep it referenced for uploading?
      *   (if possible)
      */
@@ -311,10 +312,10 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
             const imageName = `${user.id}_${Date.now()}.jpg`;
             const imageData = decode(fb.image.split(',')[1]);
 
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { data: uploadData, error: uploadError } = await supabase.storage // uploadData not needed.
               .from('feedback-images')
               .upload(imageName, imageData, {
-                contentType: 'image/jpeg'
+                contentType: 'image/jpeg' // FIXME: Don't hard-code, get MIME type somehow.
               });
 
             if (uploadError) throw uploadError;
