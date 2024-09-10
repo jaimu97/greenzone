@@ -30,6 +30,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [journeyStartTime, setJourneyStartTime] = useState<number | null>(null);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // feedback modal
+  const [journeyId, setJourneyId] = useState<number | null>(null);
 
   /* This approach to lifecycle management using useEffect is more 'flexible' than the older class-based lifecycle
    * methods I've seen online.
@@ -96,7 +97,12 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   const startJourney = () => {
     const startTime = Date.now();
     setJourneyStartTime(startTime);
+
+    const newJourneyId = Date.now(); // won't know what the real id is until it's up in supabase.
+    setJourneyId(newJourneyId);
+
     localStorage.setItem('journeyStartTime', startTime.toString());
+    localStorage.setItem('currentJourneyId', newJourneyId.toString());
   };
 
   const saveJourneyToLocalStorage = (position: Position) => {
@@ -112,7 +118,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   };
 
   const handleEndJourney = () => {
-    if (journeyStartTime) {
+    if (journeyStartTime && journeyId) {
       const journeyEndTime = Date.now();
       const journeyDuration = journeyEndTime - journeyStartTime;
 
@@ -130,6 +136,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       };
 
       const completeJourney = {
+        id: journeyId,
         startTime: formatWithOffset(journeyStartTime),
         endTime: formatWithOffset(journeyEndTime),
         duration: journeyDuration,
@@ -210,6 +217,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
         userId={user.id}
+        journeyId={journeyId}
       />
     </>
   );

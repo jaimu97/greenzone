@@ -35,7 +35,7 @@ interface JourneyPageProps {
  */
 // localstorage journey
 interface Journey {
-  id?: number; // Not used on local journeys, just need it or get a TS2339 error: `Property 'id' does not exist on type 'Journey'.`
+  id: number;
   startTime: number;
   endTime: number;
   duration: number;
@@ -172,8 +172,9 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     }
   };
 
-  const validateJourney = (journey: any): Journey | null => {
+  const validateJourney = (journey: any): Journey => {
     if (
+      typeof journey.id !== 'number' ||
       typeof journey.startTime !== 'string' ||
       typeof journey.endTime !== 'string' ||
       typeof journey.duration !== 'number' ||
@@ -181,6 +182,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       journey.positions.length === 0
     ) {
       return {
+        id: Date.now(), // probably could just make this null.
         startTime: 0,
         endTime: 0,
         duration: 0,
@@ -190,6 +192,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     }
 
     return {
+      id: journey.id,
       startTime: new Date(journey.startTime).getTime(),
       endTime: new Date(journey.endTime).getTime(),
       duration: journey.duration,
@@ -474,10 +477,6 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                         expand="block"
                         fill="solid"
                         color="secondary"
-                        /* FIXME: FUCKING FORGOT TO INCLUDE JOURNEY ID IN FEEDBACK CREATION. I HATE THIS PROJECT!!!!!
-                         *   THOUGHT I WAS SMOKING CRACK WHEN I HAD IT IN BEFORE AND REMOVED IT LIKE A FUCKWIT BUT TURNS
-                         *   OUT, PRESENT DAY ME IS THE FUCKWIT.
-                         */
                         onClick={() => openFeedbackModal(journey.id)}
                       >
                         View Feedback

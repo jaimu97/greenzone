@@ -17,9 +17,10 @@ interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId: string;
+  journeyId: number | null;
 }
 
-const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId }) => {
+const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId, journeyId }) => {
   const [feedback, setFeedback] = useState('');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
@@ -52,7 +53,8 @@ const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, us
         content: feedback,
         timestamp: new Date().toISOString(),
         image: capturedImage,
-        userId: userId
+        userId: userId,
+        journeyId: journeyId
       };
 
       // saving it to localstorage and sending it to supabase later.
