@@ -19,7 +19,7 @@ interface FeedbackModalProps {
   userId: string;
 }
 
-const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId }) => {
+const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId }) => {
   const [feedback, setFeedback] = useState('');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
@@ -101,4 +101,4 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId }
   );
 };
 
-export default FeedbackModal;
+export default FeedbackCreateModal;

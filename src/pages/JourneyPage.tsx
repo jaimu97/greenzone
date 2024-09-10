@@ -23,6 +23,7 @@ import JourneyMap from '../components/JourneyMap';
 import KestrelUploadModal from '../components/KestrelUploadModal';
 import { supabase } from '../supabaseClient'
 import { Buffer } from 'buffer'; // https://www.npmjs.com/package/buffer
+import FeedbackViewModal from '../components/FeedbackViewModal';
 
 interface JourneyPageProps {
   user: any;
@@ -63,6 +64,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [serverJourneys, setServerJourneys] = useState<Journey[]>([]); // Array of server journeys
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // Modal dialog for the csv kestel uploader
+  const [selectedFeedback, setSelectedFeedback] = useState<any[]>([]);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // modal for feedback (shows text and images)
 
   function decode(base64String: string): Uint8Array {
     /* Basically takes the base64 and converts it back to an image for supabase, since for *whatever* reason we can't
@@ -399,6 +402,13 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   };
 
+  const openFeedbackModal = (journeyId: number) => {
+    const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
+    const journeyFeedback = feedbackData.filter((fb: any) => fb.journeyId === journeyId);
+    setSelectedFeedback(journeyFeedback);
+    setIsFeedbackModalOpen(true);
+  };
+
   const renderJourneyCards = (journeys: Journey[], isLocal: boolean) => {
     return journeys.map((journey, index) => {
       if (journey === null) {
@@ -412,7 +422,10 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
           console.error('Error parsing positions:', error);
         }
       }
+
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
+      const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
+      const hasFeedback = feedbackData.some((fb: any) => fb.journeyId === journey.id);
 
       return (
         <IonCol key={isLocal ? index : journey.id} size="12" size-md="6">
@@ -457,6 +470,22 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                       </IonButton>
                     )}
                   </IonCol>
+                  {isLocal && hasFeedback && (
+                    <IonCol size="6">
+                      <IonButton
+                        expand="block"
+                        fill="solid"
+                        color="secondary"
+                        /* FIXME: FUCKING FORGOT TO INCLUDE JOURNEY ID IN FEEDBACK CREATION. I HATE THIS PROJECT!!!!!
+                         *   THOUGHT I WAS SMOKING CRACK WHEN I HAD IT IN BEFORE AND REMOVED IT LIKE A FUCKWIT BUT TURNS
+                         *   OUT, PRESENT DAY ME IS THE FUCKWIT.
+                         */
+                        onClick={() => openFeedbackModal(journey.id)}
+                      >
+                        View Feedback
+                      </IonButton>
+                    </IonCol>
+                  )}
                 </IonRow>
              </IonGrid>
             </IonCardContent>
@@ -561,6 +590,11 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
             handler: confirmDeleteJourney,
           },
         ]}
+      />
+      <FeedbackViewModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        feedback={selectedFeedback}
       />
     </IonPage>
   );

@@ -13,7 +13,7 @@ import {
 } from '@ionic/react';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import JourneyMap from './JourneyMap';
-import FeedbackModal from "./FeedbackModal";
+import FeedbackCreateModal from "./FeedbackCreateModal";
 
 // props for this component
 interface JourneyRecordingProps {
@@ -206,7 +206,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
           </IonCol>
         </IonRow>
       </IonGrid>
-      <FeedbackModal
+      <FeedbackCreateModal
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
         userId={user.id}
