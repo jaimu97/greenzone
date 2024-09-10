@@ -74,8 +74,6 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
      * resultType: CameraResultType.Base64
      * yet, we need this to get it back to a normal format.
      * https://supabase.com/docs/reference/javascript/storage-from-upload
-     * TODO: Save the image to the device without converting to base64 but keep it referenced for uploading?
-     *   (if possible)
      */
     return Buffer.from(base64String, 'base64');
   }
