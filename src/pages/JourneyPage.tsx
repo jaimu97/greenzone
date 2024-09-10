@@ -230,8 +230,54 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   };
 
   const deleteServerJourney = async (journeyId: number) => {
+    /* FIXME: Running into issues where deletions aren't happening, and I am getting errors such as:
+     *  `update or delete on table "x" violates foreign key constraint "y" on table "z"`
+     *  even though I am sure I'm removing them in an order where this shouldn't happen.
+     *  Order of dependencies in Supabase is:
+     *  1. location (fk journeys)
+     *  2. media (fk feedback)
+     *  3. feedback (fk journeys)
+     *  4. journeys
+     *  It should be safe then to delete journeys but it's not. So no deletion until this is fixed.
+     */
     try {
       console.log('Attempting to delete journey:', journeyId);
+
+      const { error: locationError } = await supabase
+        .from('location')
+        .delete()
+        .eq('journey_id', journeyId);
+
+      if (locationError) throw locationError;
+      console.log('Deleted associated locations');
+
+      const { data: feedbackData, error: feedbackFetchError } = await supabase
+        .from('feedback')
+        .select('id')
+        .eq('journey_id', journeyId);
+
+      if (feedbackFetchError) throw feedbackFetchError;
+
+      if (feedbackData && feedbackData.length > 0) {
+        const feedbackIds = feedbackData.map(fb => fb.id);
+
+        const { error: mediaError } = await supabase
+          .from('media')
+          .delete()
+          .in('feedback_id', feedbackIds);
+
+        if (mediaError) throw mediaError;
+        console.log('Deleted associated media');
+
+        const { error: feedbackError } = await supabase
+          .from('feedback')
+          .delete()
+          .eq('journey_id', journeyId);
+
+        if (feedbackError) throw feedbackError;
+        console.log('Deleted associated feedback');
+      }
+
       const { data: deletedJourney, error: journeyError } = await supabase
         .from('journeys')
         .delete()
@@ -240,19 +286,11 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       if (journeyError) throw journeyError;
       console.log('Deleted journey:', deletedJourney);
 
-      const { data: deletedLocations, error: locationError } = await supabase
-        .from('location')
-        .delete()
-        .eq('journey_id', journeyId);
-
-      if (locationError) throw locationError;
-      console.log('Deleted locations:', deletedLocations);
-
       setServerJourneys(prevJourneys => prevJourneys.filter(journey => journey.id !== journeyId));
 
       await fetchServerJourneys();
 
-      console.log('Journey deleted successfully');
+      console.log('Journey and all associated data deleted successfully');
     } catch (error) {
       console.error('Error deleting journey:', error);
     }
