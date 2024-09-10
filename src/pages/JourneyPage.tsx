@@ -41,6 +41,7 @@ interface Journey {
   duration: number;
   positions: { latitude: number; longitude: number; timestamp: number }[];
   isCorrupted?: boolean;
+  feedback?: any[];
 }
 
 // supabase journey
@@ -116,7 +117,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       if (journeyError) throw journeyError;
       console.log('Fetched journeys:', journeyData);
 
-      const journeysWithLocations = await Promise.all(
+      const journeysWithLocationsAndFeedback = await Promise.all(
         journeyData.map(async (journey) => {
           const { data: locationData, error: locationError } = await supabase
             .from('location')
@@ -125,14 +126,22 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
           if (locationError) throw locationError;
 
+          const { data: feedbackData, error: feedbackError } = await supabase
+            .from('feedback')
+            .select('*')
+            .eq('journey_id', journey.id);
+
+          if (feedbackError) throw feedbackError;
+
           return {
             ...journey,
-            locations: locationData
+            locations: locationData,
+            feedback: feedbackData || []
           };
         })
       );
 
-      const formattedJourneys = journeysWithLocations.map((journey: ServerJourney) => {
+      const formattedJourneys = journeysWithLocationsAndFeedback.map((journey: ServerJourney & { feedback: any[] }) => {
         try {
           return {
             id: journey.id,
@@ -149,7 +158,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                   timestamp: new Date(loc.location_time).getTime()
                 };
               })
-              .filter(pos => pos !== null)
+              .filter(pos => pos !== null),
+            feedback: journey.feedback
           };
         } catch (error) {
           console.error('Error parsing journey:', journey, error);
@@ -159,7 +169,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
             endTime: 0,
             duration: 0,
             positions: [],
-            isCorrupted: true
+            isCorrupted: true,
+            feedback: []
           };
         }
       });
@@ -250,7 +261,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const confirmDeleteJourney = async () => {
     if (journeyToDelete !== null) {
       const storedJourneys = JSON.parse(localStorage.getItem('allJourneys') || '[]');
-      storedJourneys.splice(journeyToDelete, 1); // unga bunga should remove the journey at the specified index not ALL
+      storedJourneys.splice(journeyToDelete, 1); // remove the journey at the specified index
       localStorage.setItem('allJourneys', JSON.stringify(storedJourneys));
       setJourneys(storedJourneys);
       setShowDeleteAlert(false);
@@ -313,8 +324,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
           // upload thge image if it exists
           if (fb.image) {
-            /* base64 header basically looks like this: data:image/jpeg;base64,/9j/4AAQS... (and so on)
-             * so these consts are basically programmers equivalent of pagan incantations to extract the MIME type to
+            /* base64 header looks like this: data:image/jpeg;base64,/9j/4AAQS... (and so on)
+             * so these 'const's are basically programmers equivalent of pagan incantations to extract the MIME type to
              * send to supabase for the contentType since phones can capture in more format types than just .png or .jpg
              */
             const imageDataUrl = fb.image;
@@ -403,9 +414,15 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   };
 
-  const openFeedbackModal = (journeyId: number) => {
-    const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
-    const journeyFeedback = feedbackData.filter((fb: any) => fb.journeyId === journeyId);
+  const openFeedbackModal = (journeyId: number, isLocal: boolean) => {
+    let journeyFeedback;
+    if (isLocal) {
+      const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
+      journeyFeedback = feedbackData.filter((fb: any) => fb.journeyId === journeyId);
+    } else {
+      const serverJourney = serverJourneys.find(j => j.id === journeyId);
+      journeyFeedback = serverJourney ? serverJourney.feedback : [];
+    }
     setSelectedFeedback(journeyFeedback);
     setIsFeedbackModalOpen(true);
   };
@@ -426,7 +443,9 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
       const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
-      const hasFeedback = feedbackData.some((fb: any) => fb.journeyId === journey.id);
+      const hasFeedback = isLocal
+      ? feedbackData.some((fb: any) => fb.journeyId === journey.id)
+      : journey.feedback && journey.feedback.length > 0;
 
       return (
         <IonCol key={isLocal ? index : journey.id} size="12" size-md="6">
@@ -471,13 +490,13 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                       </IonButton>
                     )}
                   </IonCol>
-                  {isLocal && hasFeedback && (
+                  {hasFeedback && (
                     <IonCol size="6">
                       <IonButton
                         expand="block"
                         fill="solid"
                         color="secondary"
-                        onClick={() => openFeedbackModal(journey.id)}
+                        onClick={() => openFeedbackModal(journey.id, isLocal)}
                       >
                         View Feedback
                       </IonButton>

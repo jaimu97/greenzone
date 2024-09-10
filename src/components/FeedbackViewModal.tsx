@@ -38,7 +38,10 @@ const FeedbackViewModal: React.FC<FeedbackViewModalProps> = ({ isOpen, onClose, 
               {item.image && (
                 <IonImg src={item.image} alt="Feedback Image" />
               )}
-              <p>Timestamp: {new Date(item.timestamp).toLocaleString()}</p>
+              {item.media_url && (
+                <IonImg src={item.media_url} alt="Feedback Image" />
+              )}
+              <p>Timestamp: {new Date(item.timestamp || item.created_at).toLocaleString()}</p>
             </IonCardContent>
           </IonCard>
         ))}
