@@ -309,16 +309,34 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
           // upload thge image if it exists
           if (fb.image) {
-            const imageName = `${user.id}_${Date.now()}.jpg`;
-            const imageData = decode(fb.image.split(',')[1]);
+            /* base64 header basically looks like this: data:image/jpeg;base64,/9j/4AAQS... (and so on)
+             * so these consts are basically programmers equivalent of pagan incantations to extract the MIME type to
+             * send to supabase for the contentType since phones can capture in more format types than just .png or .jpg
+             */
+            const imageDataUrl = fb.image;
+            const imageData = imageDataUrl.split(',')[1];
+            const mimeType = imageDataUrl.substring(imageDataUrl.indexOf(':') + 1, imageDataUrl.indexOf(';'));
+            const format = mimeType.split('/')[1];
+            const imageName = `${user.id}_${Date.now()}.${format}`;
+            const decodedImage = decode(imageData);
 
             const { data: uploadData, error: uploadError } = await supabase.storage // uploadData not needed.
               .from('feedback-images')
-              .upload(imageName, imageData, {
-                contentType: 'image/jpeg' // FIXME: Don't hard-code, get MIME type somehow.
+              .upload(imageName, decodedImage, {
+                contentType: mimeType
               });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+              console.error('Error uploading image:', uploadError);
+              throw uploadError;
+            }
+
+            if (!uploadData) {
+              console.error('Upload failed: No data returned');
+              throw new Error('Upload failed: No data returned');
+            }
+
+          console.log('Image uploaded successfully:', uploadData.path);
 
             const { data: { publicUrl } } = supabase.storage
               .from('feedback-images')
@@ -351,7 +369,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                 feedback_id: feedbackInsert.id,
                 media_url: mediaUrl,
                 created_at: new Date().toISOString(),
-                description: 'Feedback image'
+                description: 'Feedback image' // Can probably just drop this column in supabase?
               });
 
             if (mediaError) throw mediaError;
