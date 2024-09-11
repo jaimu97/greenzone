@@ -49,7 +49,6 @@ const SignupContainer: React.FC = () => {
         }
       }
     });
-
     if (error) throw error;
 
     if (data.user) {
@@ -69,7 +68,7 @@ const SignupContainer: React.FC = () => {
 
       if (profileError) throw profileError;
     }
-
+    
       setShowToast('Signup successful! Please check your email to verify your account.'); // Not actually working, just auto-accepts anyone for now.
     } catch (error: any) {
       setShowToast(error.message);
