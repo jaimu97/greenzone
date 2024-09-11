@@ -102,72 +102,8 @@ const AccountTab: React.FC<TabProps> = ({ user }) => {
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
+        {/* If user is logged in, show profile information */}
         {user ? (
-          // If user is logged in, show profile information
-          <IonCard>
-            <IonCardHeader>
-              <IonCardTitle>User Profile (Placeholder)</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonList>
-                <IonItem>
-                  <IonLabel>
-                    <h2>ID</h2>
-                    <p>{user.id}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>Email</h2>
-                    <p>{user.email}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>Username</h2>
-                    <p>{profile?.username || 'N/A'}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>First Name</h2>
-                    <p>{profile?.first_name || 'N/A'}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>Surname</h2>
-                    <p>{profile?.surname || 'N/A'}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>Role</h2>
-                    <p>{user.role || 'N/A'}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>Last Sign In</h2>
-                    <p>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : 'N/A'}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>Created At</h2>
-                    <p>{user.created_at ? formatDate(user.created_at) : 'N/A'}</p>
-                  </IonLabel>
-                </IonItem>
-                <IonItem>
-                  <IonLabel>
-                    <h2>Phone</h2>
-                    <p>{user.phone || 'N/A'}</p>
-                  </IonLabel>
-                </IonItem>
-              </IonList>
-              <IonButton expand="block" onClick={handleLogout} className="ion-margin-top">Logout</IonButton>
-            </IonCardContent>
-          </IonCard>
           isEditing ? (
             <EditProfileContainer user={user} onProfileUpdated={handleProfileUpdated} />
           ) : (
