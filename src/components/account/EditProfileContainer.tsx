@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonList,
   IonItem,
@@ -11,13 +11,16 @@ import {
   IonSelect,
   IonSelectOption
 } from '@ionic/react';
-import { lockClosedOutline, mailOutline, peopleOutline, personOutline } from "ionicons/icons";
+import { lockClosedOutline, peopleOutline, personOutline } from "ionicons/icons";
 import { supabase } from '../../supabaseClient';
 import './LoginContainer.css';
 
-const SignupContainer: React.FC = () => {
-  // State hooks for form fields and UI state
-  const [email, setEmail] = useState('');
+interface EditProfileContainerProps {
+  user: any;
+  onProfileUpdated: () => void; // Callback to notify parent when profile is updated
+}
+
+const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onProfileUpdated }) => {
   const [password, setPassword] = useState('');
   const [verify, setVerify] = useState('');
   const [username, setUsername] = useState('');
@@ -26,50 +29,64 @@ const SignupContainer: React.FC = () => {
   const [typeOfUser, setTypeOfUser] = useState('');
   const [showLoading, setShowLoading] = useState(false);
   const [showToast, setShowToast] = useState<string | undefined>(undefined);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  if (password !== verify) {
-    setShowToast('Passwords do not match');
-    return;
-  }
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-  setShowLoading(true);
+          if (error) throw error;
 
-  try {
-    // Attempt to sign up user through Supabase
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-          first_name: firstName,
-          surname,
+          setProfile(data);
+          // Pre-fill form fields with fetched profile data
+          setUsername(data.username);
+          setFirstName(data.first_name);
+          setSurname(data.surname);
+          setTypeOfUser(data.User_Type);
+          // You can add more fields here as necessary
+        } catch (error) {
+          console.error('Error fetching profile: ', error);
         }
       }
-    });
-    if (error) throw error;
+      setLoading(false);
+    };
 
-    if (data.user) {
-      // If signup successful, create a profile in the profiles table
-      const fullname = firstName + " " + surname;
+    fetchProfile();
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (password !== verify) {
+      setShowToast('Passwords do not match');
+      return;
+    }
+
+    setShowLoading(true);
+
+    try {
+      const fullname = `${firstName} ${surname}`;
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          id: data.user.id,
           username,
           first_name: firstName,
           surname,
           full_name: fullname,
           User_Type: typeOfUser
         })
-        .eq('id', data.user.id);
+        .eq('id', user.id);
 
       if (profileError) throw profileError;
-    }
-    
-      setShowToast('Signup successful! Please check your email to verify your account.'); // Not actually working, just auto-accepts anyone for now.
+
+      setShowToast('Profile updated successfully!');
+      onProfileUpdated(); // Notify parent component that profile was updated
     } catch (error: any) {
       setShowToast(error.message);
     } finally {
@@ -81,24 +98,15 @@ const SignupContainer: React.FC = () => {
     <form onSubmit={handleSubmit}>
       <div className="ion-text-center">
         <IonText className="ion-margin-bottom">
-          <h1 className="bigtext">CREATE AN ACCOUNT</h1>
+          <h1 className="bigtext">EDIT PROFILE</h1>
         </IonText>
       </div>
       <IonList inset={true}>
         <IonItem>
-          <IonIcon icon={mailOutline} slot="start" />
-          <IonInput
-            label="Email"
-            placeholder=""
-            value={email}
-            onIonChange={(e) => setEmail(e.detail.value!)}
-          />
-        </IonItem>
-        <IonItem>
           <IonIcon icon={personOutline} slot="start" />
           <IonInput
             label="Username"
-            placeholder=""
+            placeholder="Enter username"
             value={username}
             onIonChange={(e) => setUsername(e.detail.value!)}
           />
@@ -107,7 +115,7 @@ const SignupContainer: React.FC = () => {
           <IonIcon icon={peopleOutline} slot="start" />
           <IonInput
             label="First Name"
-            placeholder=""
+            placeholder="Enter first name"
             value={firstName}
             onIonChange={(e) => setFirstName(e.detail.value!)}
           />
@@ -116,19 +124,18 @@ const SignupContainer: React.FC = () => {
           <IonIcon icon={peopleOutline} slot="start" />
           <IonInput
             label="Surname"
-            placeholder=""
+            placeholder="Enter surname"
             value={surname}
             onIonChange={(e) => setSurname(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
           <IonIcon icon={peopleOutline} slot="start" />
-          <IonSelect 
-            label="Type of User" 
+          <IonSelect
+            label="Type of User"
             placeholder="Select"
-            onIonChange={(e) => 
-              setTypeOfUser(e.detail.value!)
-            }
+            value={typeOfUser}
+            onIonChange={(e) => setTypeOfUser(e.detail.value!)}
           >
             <IonSelectOption value="Patient">Patient</IonSelectOption>
             <IonSelectOption value="Staff">Staff</IonSelectOption>
@@ -140,7 +147,7 @@ const SignupContainer: React.FC = () => {
           <IonInput
             label="Password"
             type="password"
-            placeholder=""
+            placeholder="Enter password"
             value={password}
             onIonChange={(e) => setPassword(e.detail.value!)}
           />
@@ -150,16 +157,16 @@ const SignupContainer: React.FC = () => {
           <IonInput
             label="Confirm Password"
             type="password"
-            placeholder=""
+            placeholder="Re-enter password"
             value={verify}
             onIonChange={(e) => setVerify(e.detail.value!)}
           />
         </IonItem>
       </IonList>
       <div className="ion-text-center ion-margin-top">
-        <IonButton type="submit" color="primary">Create Account</IonButton>
+        <IonButton type="submit" color="primary">Update Profile</IonButton>
       </div>
-      <IonLoading isOpen={showLoading} message="Creating account..." />
+      <IonLoading isOpen={showLoading} message="Updating profile..." />
       <IonToast
         isOpen={!!showToast}
         message={showToast}
@@ -170,4 +177,4 @@ const SignupContainer: React.FC = () => {
   );
 };
 
-export default SignupContainer;
+export default EditProfileContainer;
