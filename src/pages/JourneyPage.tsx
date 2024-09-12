@@ -20,7 +20,10 @@ import {
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
 import JourneyMap from '../components/JourneyMap';
+import KestrelUploadModal from '../components/KestrelUploadModal';
 import { supabase } from '../supabaseClient'
+import { Buffer } from 'buffer'; // https://www.npmjs.com/package/buffer
+import FeedbackViewModal from '../components/FeedbackViewModal';
 
 interface JourneyPageProps {
   user: any;
@@ -32,12 +35,13 @@ interface JourneyPageProps {
  */
 // localstorage journey
 interface Journey {
-  id?: number; // Not used on local journeys, just need it or get a TS2339 error: `Property 'id' does not exist on type 'Journey'.`
+  id: number;
   startTime: number;
   endTime: number;
   duration: number;
   positions: { latitude: number; longitude: number; timestamp: number }[];
   isCorrupted?: boolean;
+  feedback?: any[];
 }
 
 // supabase journey
@@ -60,6 +64,21 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [serverJourneys, setServerJourneys] = useState<Journey[]>([]); // Array of server journeys
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // Modal dialog for the Kestel .csv uploader
+  const [selectedFeedback, setSelectedFeedback] = useState<any[]>([]);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // modal for feedback (shows text and images)
+  const [serverJourneyToDelete, setServerJourneyToDelete] = useState<number | null>(null);
+
+  function decode(base64String: string): Uint8Array {
+    /* Basically takes the base64 and converts it back to an image for supabase, since for *whatever* reason we can't
+     * just send the base64 form to the db.
+     * A bit annoying since there's only a method for getting it into base64 built in to the capture:
+     * resultType: CameraResultType.Base64
+     * yet, we need this to get it back to a normal format.
+     * https://supabase.com/docs/reference/javascript/storage-from-upload
+     */
+    return Buffer.from(base64String, 'base64');
+  }
 
   // useEffect hook runs after component mounts or when dependencies change
   useEffect(() => {
@@ -99,7 +118,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       if (journeyError) throw journeyError;
       console.log('Fetched journeys:', journeyData);
 
-      const journeysWithLocations = await Promise.all(
+      const journeysWithLocationsAndFeedback = await Promise.all(
         journeyData.map(async (journey) => {
           const { data: locationData, error: locationError } = await supabase
             .from('location')
@@ -108,14 +127,22 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
           if (locationError) throw locationError;
 
+          const { data: feedbackData, error: feedbackError } = await supabase
+            .from('feedback')
+            .select('*')
+            .eq('journey_id', journey.id);
+
+          if (feedbackError) throw feedbackError;
+
           return {
             ...journey,
-            locations: locationData
+            locations: locationData,
+            feedback: feedbackData || []
           };
         })
       );
 
-      const formattedJourneys = journeysWithLocations.map((journey: ServerJourney) => {
+      const formattedJourneys = journeysWithLocationsAndFeedback.map((journey: ServerJourney & { feedback: any[] }) => {
         try {
           return {
             id: journey.id,
@@ -132,7 +159,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                   timestamp: new Date(loc.location_time).getTime()
                 };
               })
-              .filter(pos => pos !== null)
+              .filter(pos => pos !== null),
+            feedback: journey.feedback
           };
         } catch (error) {
           console.error('Error parsing journey:', journey, error);
@@ -142,7 +170,8 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
             endTime: 0,
             duration: 0,
             positions: [],
-            isCorrupted: true
+            isCorrupted: true,
+            feedback: []
           };
         }
       });
@@ -155,8 +184,9 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     }
   };
 
-  const validateJourney = (journey: any): Journey | null => {
+  const validateJourney = (journey: any): Journey => {
     if (
+      typeof journey.id !== 'number' ||
       typeof journey.startTime !== 'string' ||
       typeof journey.endTime !== 'string' ||
       typeof journey.duration !== 'number' ||
@@ -164,6 +194,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       journey.positions.length === 0
     ) {
       return {
+        id: Date.now(),
         startTime: 0,
         endTime: 0,
         duration: 0,
@@ -173,6 +204,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     }
 
     return {
+      id: journey.id,
       startTime: new Date(journey.startTime).getTime(),
       endTime: new Date(journey.endTime).getTime(),
       duration: journey.duration,
@@ -198,39 +230,74 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     setShowDeleteAlert(true);
   };
 
-  const deleteServerJourney = async (journeyId: number) => {
-    try {
-      console.log('Attempting to delete journey:', journeyId);
-      const { data: deletedJourney, error: journeyError } = await supabase
-        .from('journeys')
-        .delete()
-        .eq('id', journeyId);
+  const deleteServerJourney = (journeyId: number) => {
+    setServerJourneyToDelete(journeyId);
+    setShowDeleteAlert(true);
+  };
 
-      if (journeyError) throw journeyError;
-      console.log('Deleted journey:', deletedJourney);
+  const confirmDeleteServerJourney = async () => {
+    if (serverJourneyToDelete !== null) {
+      try {
+        console.log('Attempting to delete journey:', serverJourneyToDelete);
 
-      const { data: deletedLocations, error: locationError } = await supabase
-        .from('location')
-        .delete()
-        .eq('journey_id', journeyId);
+        const {error: locationError} = await supabase
+          .from('location')
+          .delete()
+          .eq('journey_id', serverJourneyToDelete);
 
-      if (locationError) throw locationError;
-      console.log('Deleted locations:', deletedLocations);
+        if (locationError) throw locationError;
+        console.log('Deleted associated locations');
 
-      setServerJourneys(prevJourneys => prevJourneys.filter(journey => journey.id !== journeyId));
+        const {data: feedbackData, error: feedbackFetchError} = await supabase
+          .from('feedback')
+          .select('id')
+          .eq('journey_id', serverJourneyToDelete);
 
-      await fetchServerJourneys();
+        if (feedbackFetchError) throw feedbackFetchError;
 
-      console.log('Journey deleted successfully');
-    } catch (error) {
-      console.error('Error deleting journey:', error);
+        if (feedbackData && feedbackData.length > 0) {
+          const feedbackIds = feedbackData.map(fb => fb.id);
+
+          const {error: mediaError} = await supabase
+            .from('media')
+            .delete()
+            .in('feedback_id', feedbackIds);
+
+          if (mediaError) throw mediaError;
+          console.log('Deleted associated media');
+
+          const {error: feedbackError} = await supabase
+            .from('feedback')
+            .delete()
+            .eq('journey_id', serverJourneyToDelete);
+
+          if (feedbackError) throw feedbackError;
+          console.log('Deleted associated feedback');
+        }
+
+        const {data: deletedJourney, error: journeyError} = await supabase
+          .from('journeys')
+          .delete()
+          .eq('id', serverJourneyToDelete);
+
+        if (journeyError) throw journeyError;
+        console.log('Deleted journey:', deletedJourney);
+
+        setServerJourneys(prevJourneys => prevJourneys.filter(journey => journey.id !== serverJourneyToDelete));
+
+        await fetchServerJourneys();
+
+        console.log('Journey and all associated data deleted successfully');
+      } catch (error) {
+        console.error('Error deleting journey:', error);
+      }
     }
   };
 
   const confirmDeleteJourney = async () => {
     if (journeyToDelete !== null) {
       const storedJourneys = JSON.parse(localStorage.getItem('allJourneys') || '[]');
-      storedJourneys.splice(journeyToDelete, 1); // unga bunga should remove the journey at the specified index not ALL
+      storedJourneys.splice(journeyToDelete, 1); // remove the journey at the specified index
       localStorage.setItem('allJourneys', JSON.stringify(storedJourneys));
       setJourneys(storedJourneys);
       setShowDeleteAlert(false);
@@ -272,7 +339,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
       const locationInserts = journey.positions.map(pos => ({
         journey_id: journeyData.id,
-        // POINT(lat lng): https://www.crunchydata.com/blog/postgis-and-the-geography-type
+        // POINT(lng lat): https://www.crunchydata.com/blog/postgis-and-the-geography-type
         location: `POINT(${pos.longitude} ${pos.latitude})`,
         location_time: new Date(pos.timestamp).toISOString()
       }));
@@ -283,7 +350,91 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
       if (locationError) throw locationError;
 
-      console.log('Journey uploaded successfully!')
+      console.log('Attempting to insert feedback for journey:', journeyData.id);
+      const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
+      const journeyFeedback = feedbackData.filter((fb: any) => fb.journeyId === journey.id);
+
+      if (journeyFeedback.length > 0) {
+        for (const fb of journeyFeedback) {
+          let mediaUrl = null;
+
+          // upload thge image if it exists
+          if (fb.image) {
+            /* base64 header looks like this: data:image/jpeg;base64,/9j/4AAQS... (and so on)
+             * so these 'const's are basically programmers equivalent of pagan incantations to extract the MIME type to
+             * send to supabase for the contentType since phones can capture in more format types than just .png or .jpg
+             */
+            const imageDataUrl = fb.image;
+            const imageData = imageDataUrl.split(',')[1];
+            const mimeType = imageDataUrl.substring(imageDataUrl.indexOf(':') + 1, imageDataUrl.indexOf(';'));
+            const format = mimeType.split('/')[1];
+            const imageName = `${user.id}_${Date.now()}.${format}`;
+            const decodedImage = decode(imageData);
+
+            const { data: uploadData, error: uploadError } = await supabase.storage // uploadData not needed.
+              .from('feedback-images')
+              .upload(imageName, decodedImage, {
+                contentType: mimeType
+              });
+
+            if (uploadError) {
+              console.error('Error uploading image:', uploadError);
+              throw uploadError;
+            }
+
+            if (!uploadData) {
+              console.error('Upload failed: No data returned');
+              throw new Error('Upload failed: No data returned');
+            }
+
+          console.log('Image uploaded successfully:', uploadData.path);
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('feedback-images')
+              .getPublicUrl(imageName);
+
+            mediaUrl = publicUrl;
+          }
+
+          // insert the feedback
+          const { data: feedbackInsert, error: feedbackError } = await supabase
+            .from('feedback')
+            .insert({
+              journey_id: journeyData.id, // need associated journey since it's a FK for this table.
+              user_id: user.id,
+              content: fb.content,
+              created_at: fb.timestamp,
+              media_url: mediaUrl
+            })
+            .select()
+            .single();
+
+          if (feedbackError) throw feedbackError;
+
+          // insert media record if image was uploaded
+          if (mediaUrl) {
+            const { error: mediaError } = await supabase
+              .from('media')
+              .insert({
+                user_id: user.id,
+                feedback_id: feedbackInsert.id,
+                media_url: mediaUrl,
+                created_at: new Date().toISOString(),
+                description: 'Feedback image' // Can probably just drop this column in supabase?
+              });
+
+            if (mediaError) throw mediaError;
+          }
+        }
+
+        console.log('Feedback and media uploaded successfully');
+
+        // remove feedback:
+        const remainingFeedback = feedbackData.filter((fb: any) => fb.journeyId !== journey.id);
+        localStorage.setItem('journeyFeedback', JSON.stringify(remainingFeedback));
+      }
+
+      console.log('Journey, images and shit uploaded successfully!');
 
       // remove from local storage:
       const updatedJourneys = journeys.filter((_, i) => i !== index);
@@ -299,6 +450,19 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
 
   };
 
+  const openFeedbackModal = (journeyId: number, isLocal: boolean) => {
+    let journeyFeedback;
+    if (isLocal) {
+      const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
+      journeyFeedback = feedbackData.filter((fb: any) => fb.journeyId === journeyId);
+    } else {
+      const serverJourney = serverJourneys.find(j => j.id === journeyId);
+      journeyFeedback = serverJourney ? serverJourney.feedback : [];
+    }
+    setSelectedFeedback(journeyFeedback);
+    setIsFeedbackModalOpen(true);
+  };
+
   const renderJourneyCards = (journeys: Journey[], isLocal: boolean) => {
     return journeys.map((journey, index) => {
       if (journey === null) {
@@ -312,7 +476,12 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
           console.error('Error parsing positions:', error);
         }
       }
+
       const durationInMinutes = Math.round(journey.duration / 60000); // milliseconds to minutes
+      const feedbackData = JSON.parse(localStorage.getItem('journeyFeedback') || '[]');
+      const hasFeedback = isLocal
+      ? feedbackData.some((fb: any) => fb.journeyId === journey.id)
+      : journey.feedback && journey.feedback.length > 0;
 
       return (
         <IonCol key={isLocal ? index : journey.id} size="12" size-md="6">
@@ -357,6 +526,18 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                       </IonButton>
                     )}
                   </IonCol>
+                  {hasFeedback && (
+                    <IonCol size="6">
+                      <IonButton
+                        expand="block"
+                        fill="solid"
+                        color="secondary"
+                        onClick={() => openFeedbackModal(journey.id, isLocal)}
+                      >
+                        View Feedback
+                      </IonButton>
+                    </IonCol>
+                  )}
                 </IonRow>
              </IonGrid>
             </IonCardContent>
@@ -404,7 +585,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       <IonContent fullscreen>
         <div className="ion-padding">
           {isRecording ? (
-            <JourneyRecording onEndJourney={endJourney} />
+            <JourneyRecording onEndJourney={endJourney} user={user}/>
           ) : (
             <>
               <div className="ion-text-center home-container">
@@ -414,7 +595,17 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
               </div>
               <IonText>
                 <h2>Record a Journey</h2>
-                <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
+              </IonText>
+              <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
+
+              <IonText>
+                <h2>Upload Kestrel Data</h2>
+              </IonText>
+              <IonButton expand="block" size="large" onClick={() => setIsUploadModalOpen(true)}>
+                Upload Kestrel Data
+              </IonButton>
+
+              <IonText>
                 <h2>Previous Journeys</h2>
               </IonText>
               <IonGrid>
@@ -427,6 +618,11 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
           )}
         </div>
       </IonContent>
+      <KestrelUploadModal
+        user={user}
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+      />
       <IonAlert
         isOpen={showDeleteAlert}
         onDidDismiss={() => setShowDeleteAlert(false)}
@@ -439,13 +635,25 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
             handler: () => {
               setShowDeleteAlert(false);
               setJourneyToDelete(null);
+              setServerJourneyToDelete(null);
             },
           },
           {
             text: 'Delete',
-            handler: confirmDeleteJourney,
+            handler: () => {
+              if (journeyToDelete !== null) {
+                confirmDeleteJourney();
+              } else if (serverJourneyToDelete !== null) {
+                confirmDeleteServerJourney();
+              }
+            },
           },
         ]}
+      />
+      <FeedbackViewModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        feedback={selectedFeedback}
       />
     </IonPage>
   );

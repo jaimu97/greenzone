@@ -7,7 +7,12 @@ const config: CapacitorConfig = {
   /* Ignore the deprecation warning of "bundledWebRuntime".
    * Building an Android Studio will not work properly without it. (At least on my machine)
    */
-  bundledWebRuntime: false
+  bundledWebRuntime: false,
+  plugins: {
+    Camera: {
+      permissions: ["camera"]
+    }
+  }
 };
 
 export default config;
