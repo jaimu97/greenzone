@@ -64,13 +64,14 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [serverJourneys, setServerJourneys] = useState<Journey[]>([]); // Array of server journeys
   const [isLoading, setIsLoading] = useState(true);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // Modal dialog for the csv kestel uploader
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // Modal dialog for the Kestel .csv uploader
   const [selectedFeedback, setSelectedFeedback] = useState<any[]>([]);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // modal for feedback (shows text and images)
+  const [serverJourneyToDelete, setServerJourneyToDelete] = useState<number | null>(null);
 
   function decode(base64String: string): Uint8Array {
     /* Basically takes the base64 and converts it back to an image for supabase, since for *whatever* reason we can't
-     * just send the base64 form to the db. -_-
+     * just send the base64 form to the db.
      * A bit annoying since there's only a method for getting it into base64 built in to the capture:
      * resultType: CameraResultType.Base64
      * yet, we need this to get it back to a normal format.
@@ -193,7 +194,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       journey.positions.length === 0
     ) {
       return {
-        id: Date.now(), // probably could just make this null.
+        id: Date.now(),
         startTime: 0,
         endTime: 0,
         duration: 0,
@@ -229,70 +230,67 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     setShowDeleteAlert(true);
   };
 
-  const deleteServerJourney = async (journeyId: number) => {
-    /* FIXME: Running into issues where deletions aren't happening, and I am getting errors such as:
-     *  `update or delete on table "x" violates foreign key constraint "y" on table "z"`
-     *  even though I am sure I'm removing them in an order where this shouldn't happen.
-     *  Order of dependencies in Supabase is:
-     *  1. location (fk journeys)
-     *  2. media (fk feedback)
-     *  3. feedback (fk journeys)
-     *  4. journeys
-     *  It should be safe then to delete journeys but it's not. So no deletion until this is fixed.
-     */
-    try {
-      console.log('Attempting to delete journey:', journeyId);
+  const deleteServerJourney = (journeyId: number) => {
+    setServerJourneyToDelete(journeyId);
+    setShowDeleteAlert(true);
+  };
 
-      const { error: locationError } = await supabase
-        .from('location')
-        .delete()
-        .eq('journey_id', journeyId);
+  const confirmDeleteServerJourney = async () => {
+    if (serverJourneyToDelete !== null) {
+      try {
+        console.log('Attempting to delete journey:', serverJourneyToDelete);
 
-      if (locationError) throw locationError;
-      console.log('Deleted associated locations');
-
-      const { data: feedbackData, error: feedbackFetchError } = await supabase
-        .from('feedback')
-        .select('id')
-        .eq('journey_id', journeyId);
-
-      if (feedbackFetchError) throw feedbackFetchError;
-
-      if (feedbackData && feedbackData.length > 0) {
-        const feedbackIds = feedbackData.map(fb => fb.id);
-
-        const { error: mediaError } = await supabase
-          .from('media')
+        const {error: locationError} = await supabase
+          .from('location')
           .delete()
-          .in('feedback_id', feedbackIds);
+          .eq('journey_id', serverJourneyToDelete);
 
-        if (mediaError) throw mediaError;
-        console.log('Deleted associated media');
+        if (locationError) throw locationError;
+        console.log('Deleted associated locations');
 
-        const { error: feedbackError } = await supabase
+        const {data: feedbackData, error: feedbackFetchError} = await supabase
           .from('feedback')
+          .select('id')
+          .eq('journey_id', serverJourneyToDelete);
+
+        if (feedbackFetchError) throw feedbackFetchError;
+
+        if (feedbackData && feedbackData.length > 0) {
+          const feedbackIds = feedbackData.map(fb => fb.id);
+
+          const {error: mediaError} = await supabase
+            .from('media')
+            .delete()
+            .in('feedback_id', feedbackIds);
+
+          if (mediaError) throw mediaError;
+          console.log('Deleted associated media');
+
+          const {error: feedbackError} = await supabase
+            .from('feedback')
+            .delete()
+            .eq('journey_id', serverJourneyToDelete);
+
+          if (feedbackError) throw feedbackError;
+          console.log('Deleted associated feedback');
+        }
+
+        const {data: deletedJourney, error: journeyError} = await supabase
+          .from('journeys')
           .delete()
-          .eq('journey_id', journeyId);
+          .eq('id', serverJourneyToDelete);
 
-        if (feedbackError) throw feedbackError;
-        console.log('Deleted associated feedback');
+        if (journeyError) throw journeyError;
+        console.log('Deleted journey:', deletedJourney);
+
+        setServerJourneys(prevJourneys => prevJourneys.filter(journey => journey.id !== serverJourneyToDelete));
+
+        await fetchServerJourneys();
+
+        console.log('Journey and all associated data deleted successfully');
+      } catch (error) {
+        console.error('Error deleting journey:', error);
       }
-
-      const { data: deletedJourney, error: journeyError } = await supabase
-        .from('journeys')
-        .delete()
-        .eq('id', journeyId);
-
-      if (journeyError) throw journeyError;
-      console.log('Deleted journey:', deletedJourney);
-
-      setServerJourneys(prevJourneys => prevJourneys.filter(journey => journey.id !== journeyId));
-
-      await fetchServerJourneys();
-
-      console.log('Journey and all associated data deleted successfully');
-    } catch (error) {
-      console.error('Error deleting journey:', error);
     }
   };
 
@@ -637,11 +635,18 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
             handler: () => {
               setShowDeleteAlert(false);
               setJourneyToDelete(null);
+              setServerJourneyToDelete(null);
             },
           },
           {
             text: 'Delete',
-            handler: confirmDeleteJourney,
+            handler: () => {
+              if (journeyToDelete !== null) {
+                confirmDeleteJourney();
+              } else if (serverJourneyToDelete !== null) {
+                confirmDeleteServerJourney();
+              }
+            },
           },
         ]}
       />
