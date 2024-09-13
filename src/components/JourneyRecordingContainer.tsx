@@ -12,6 +12,7 @@ import {
   IonAlert,
 } from '@ionic/react';
 import { Geolocation, Position } from '@capacitor/geolocation';
+import { BackgroundRunner } from '@capacitor/background-runner';
 import JourneyMap from './JourneyMap';
 import FeedbackCreateModal from "./FeedbackCreateModal";
 
@@ -19,6 +20,15 @@ import FeedbackCreateModal from "./FeedbackCreateModal";
 interface JourneyRecordingProps {
   onEndJourney: () => void; // function is called when the journey ends
   user: any;
+}
+
+interface LocationItem { // FIXME: TIME OF CAPTURE NEEDED
+  location: {
+    coords: {
+      latitude: number;
+      longitude: number;
+    }
+  };
 }
 
 // Documentation: https://ionicframework.com/docs/native/geolocation
@@ -65,6 +75,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   useEffect(() => {
     checkPermissions();
     startJourney();
+    initBackgroundRunner();
     let watchId: string;
 
     const startWatching = async () => {
@@ -88,6 +99,57 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       }
     };
   }, []); // Empty dependency array means this effect runs once on mount
+
+  const initBackgroundRunner = async () => {
+    try {
+      const permissions = await BackgroundRunner.requestPermissions({
+        apis: ['geolocation'],
+      });
+      console.log('Background runner permissions:', permissions);
+    } catch (err) {
+      console.error('Failed to initialize background runner:', err);
+    }
+  };
+
+  /* FIXME: Super jank implementation, the user needs to unlock their device and press the "Load Background Locations"
+   *   button for the app to load what was captured in the background. Seems that background execution is
+   *   under system restrictions for what I can actually do with the information captured... :(
+   */
+  const loadLocations = async () => {
+    try {
+      console.log('Attempting to load locations');
+      const result = await BackgroundRunner.dispatchEvent({
+        label: 'com.greenzone.locationtracking',
+        event: 'loadLocations',
+        details: {},
+      });
+      console.log('Result from background task:', JSON.stringify(result, null, 2));
+
+      if (Array.isArray(result) && result.length > 0) {
+        const locations = result as LocationItem[];
+        setPositions(locations.map(item => [item.location.coords.latitude, item.location.coords.longitude]));
+        console.log('Locations loaded:', locations.length);
+      } else {
+        console.log('No locations found or invalid result');
+      }
+    } catch (err) {
+      console.error('Failed to load locations:', err);
+    }
+  };
+
+  const DEBUGTriggerBackgroundTask = async () => {
+    try {
+      await BackgroundRunner.dispatchEvent({
+        label: 'com.greenzone.locationtracking',
+        event: 'trackLocation',
+        details: {},
+      });
+      console.log('Background task triggered manually');
+    } catch (err) {
+      console.error('Failed to trigger background task:', err);
+    }
+  };
+
 
   const checkPermissions = async () => {
     const status = await Geolocation.checkPermissions();
@@ -201,6 +263,8 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
           </IonText>
         </IonCardContent>
       </IonCard>
+      <IonButton expand="block" onClick={loadLocations}>Load Background Locations</IonButton>
+      <IonButton expand="block" onClick={DEBUGTriggerBackgroundTask}>DEBUUG: triggerBackgroundTask</IonButton>
       <IonButton expand="block" color="danger" onClick={handleEndJourney}>
         End Journey
       </IonButton>
