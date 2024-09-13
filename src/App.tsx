@@ -52,6 +52,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 import {useEffect, useState} from "react";
+import {BackgroundRunner} from "@capacitor/background-runner";
 
 setupIonicReact();
 
@@ -74,6 +75,8 @@ const App: React.FC = () => {
 
     fetchUser();
 
+    initBackgroundRunner();
+
     const {data: authListener} = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -83,6 +86,17 @@ const App: React.FC = () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  const initBackgroundRunner = async () => {
+    try {
+      const permissions = await BackgroundRunner.requestPermissions({
+        apis: ['geolocation'],
+      });
+      console.log('Background runner permissions:', permissions);
+    } catch (err) {
+      console.error('Failed to initialize background runner:', err);
+    }
+  };
 
   // Shows a loading spinner while grabbing user data
   if (loading) {

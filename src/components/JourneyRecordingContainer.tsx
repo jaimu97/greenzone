@@ -31,6 +31,46 @@ interface LocationItem { // FIXME: TIME OF CAPTURE NEEDED
   };
 }
 
+/* BackgroundRunner.dispatchEvent() doesn't have any fucking typescript definitions, so I kept getting
+ * TS2339: Property [x] does not exist on type void
+ * This is just what gets returned from the background runner defined as an interface:
+ * [
+ *   {
+ *     "location": {
+ *       "latitude": [SOMEWHERE...],
+ *       "longitude": [SOMEWHERE...],
+ *       "accuracy": 26.800001,
+ *       "altitude": 27.8787841796875,
+ *       "speed": 1.51,
+ *       "heading": 204.7
+ *     },
+ *     "time": 1726189854710
+ *   }
+ * ]
+ */
+interface TrackLocationResult {
+  success: boolean;
+  message?: string;
+  count?: number;
+  error?: string;
+}
+
+interface LoadLocationsResult {
+  success: boolean;
+  locations?: Array<{
+    location: {
+      latitude: number;
+      longitude: number;
+      accuracy: number;
+      altitude?: number;
+      speed?: number;
+      heading?: number;
+    };
+    time: number;
+  }>;
+  error?: string;
+}
+
 // Documentation: https://ionicframework.com/docs/native/geolocation
 
 const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourney, user }) => {
@@ -75,7 +115,6 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   useEffect(() => {
     checkPermissions();
     startJourney();
-    initBackgroundRunner();
     let watchId: string;
 
     const startWatching = async () => {
@@ -100,17 +139,6 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
     };
   }, []); // Empty dependency array means this effect runs once on mount
 
-  const initBackgroundRunner = async () => {
-    try {
-      const permissions = await BackgroundRunner.requestPermissions({
-        apis: ['geolocation'],
-      });
-      console.log('Background runner permissions:', permissions);
-    } catch (err) {
-      console.error('Failed to initialize background runner:', err);
-    }
-  };
-
   /* FIXME: Super jank implementation, the user needs to unlock their device and press the "Load Background Locations"
    *   button for the app to load what was captured in the background. Seems that background execution is
    *   under system restrictions for what I can actually do with the information captured... :(
@@ -122,15 +150,14 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
         label: 'com.greenzone.locationtracking',
         event: 'loadLocations',
         details: {},
-      });
-      console.log('Result from background task:', JSON.stringify(result, null, 2));
+      }) as LoadLocationsResult;
 
-      if (Array.isArray(result) && result.length > 0) {
-        const locations = result as LocationItem[];
-        setPositions(locations.map(item => [item.location.coords.latitude, item.location.coords.longitude]));
-        console.log('Locations loaded:', locations.length);
+      console.log('Load locations result:', result);
+      if (result.success && result.locations) {
+        console.log('Loaded locations:', result.locations);
+        // TODO: Leaflet shit here.
       } else {
-        console.log('No locations found or invalid result');
+        console.error('Failed to load locations:', result.error);
       }
     } catch (err) {
       console.error('Failed to load locations:', err);
@@ -139,12 +166,19 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
 
   const DEBUGTriggerBackgroundTask = async () => {
     try {
-      await BackgroundRunner.dispatchEvent({
+      console.log('Attempting to trigger background task');
+      const result = await BackgroundRunner.dispatchEvent({
         label: 'com.greenzone.locationtracking',
         event: 'trackLocation',
         details: {},
-      });
-      console.log('Background task triggered manually');
+      }) as TrackLocationResult;
+
+      console.log('Background task result:', result);
+      if (result.success) {
+        console.log(`Location saved. Total locations: ${result.count}`);
+      } else {
+        console.error('Failed to save location:', result.error);
+      }
     } catch (err) {
       console.error('Failed to trigger background task:', err);
     }
@@ -264,7 +298,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
         </IonCardContent>
       </IonCard>
       <IonButton expand="block" onClick={loadLocations}>Load Background Locations</IonButton>
-      <IonButton expand="block" onClick={DEBUGTriggerBackgroundTask}>DEBUUG: triggerBackgroundTask</IonButton>
+      <IonButton expand="block" onClick={DEBUGTriggerBackgroundTask}>DEBUG: triggerBackgroundTask</IonButton>
       <IonButton expand="block" color="danger" onClick={handleEndJourney}>
         End Journey
       </IonButton>
