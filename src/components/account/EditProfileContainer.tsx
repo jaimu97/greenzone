@@ -49,7 +49,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
           setUsername(data.username);
           setFirstName(data.first_name);
           setSurname(data.surname);
-          setTypeOfUser(data.User_Type);
+          setTypeOfUser(data.user_type);
           // You can add more fields here as necessary
         } catch (error) {
           console.error('Error fetching profile: ', error);
@@ -79,7 +79,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
           first_name: firstName,
           surname,
           full_name: fullname,
-          User_Type: typeOfUser
+          user_type: typeOfUser
         })
         .eq('id', user.id);
 
