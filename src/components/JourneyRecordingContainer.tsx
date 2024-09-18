@@ -149,11 +149,11 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       }) as LoadLocationsResult;
 
       console.log('Load locations result:', result);
-      if (result.success && result.locations) {
+      if (result.success && Array.isArray(result.locations)) {
         console.log('Loaded locations:', result.locations);
         return result.locations;
       } else {
-        console.error('Failed to load locations:', result.error);
+        console.error('Failed to load locations or invalid data:', result.error || 'Unknown error');
         return [];
       }
     } catch (err) {
@@ -163,36 +163,49 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   };
 
   const processBackgroundLocations = async () => {
-    const backgroundLocations = await loadLocations();
-    if (backgroundLocations.length > 0) {
-      const newPositions = backgroundLocations.map(item => [
-        item.location.latitude,
-        item.location.longitude
-      ] as [number, number]);
+    try {
+      const backgroundLocations = await loadLocations();
+      console.log('Loaded background locations:', JSON.stringify(backgroundLocations));
 
-      setPositions(prevPositions => [...prevPositions, ...newPositions]);
+      if (backgroundLocations && backgroundLocations.length > 0) {
+        const validLocations = backgroundLocations.filter(item =>
+          //item && item.location && typeof item.location.latitude === 'number' && typeof item.location.longitude === 'number'
+          item && item.location && true && true
+        );
 
-      // Save to localtorage
-      let journeyData = JSON.parse(localStorage.getItem('currentJourney') || '[]');
-      const newJourneyData = backgroundLocations.map(item => ({
-        location: `POINT(${item.location.longitude} ${item.location.latitude})`,
-        timestamp: item.time,
-      }));
-      journeyData = [...journeyData, ...newJourneyData];
-      localStorage.setItem('currentJourney', JSON.stringify(journeyData));
+        if (validLocations.length > 0) {
+          const newPositions = validLocations.map(item => [
+            item.location.latitude,
+            item.location.longitude
+          ] as [number, number]);
 
-      // Clear background runner's cache
-      await BackgroundRunner.dispatchEvent({
-        label: 'com.greenzone.locationtracking',
-        event: 'clearLocations',
-        details: {},
-      });
-    }
-  };
+          setPositions(prevPositions => [...prevPositions, ...newPositions]);
 
-  const handleVisibilityChange = () => {
-    if (!document.hidden) {
-      processBackgroundLocations();
+          // Save to localstorage
+          let journeyData = JSON.parse(localStorage.getItem('currentJourney') || '[]');
+          const newJourneyData = validLocations.map(item => ({
+            location: `POINT(${item.location.longitude} ${item.location.latitude})`,
+            timestamp: item.time,
+          }));
+          journeyData = [...journeyData, ...newJourneyData];
+          localStorage.setItem('currentJourney', JSON.stringify(journeyData));
+
+          console.log('Added background locations:', validLocations.length);
+
+          // Clear background runner's cache
+          await BackgroundRunner.dispatchEvent({
+            label: 'com.greenzone.locationtracking',
+            event: 'clearLocations',
+            details: {},
+          });
+        } else {
+          console.warn('No valid locations found in background data');
+        }
+      } else {
+        console.log('No background locations to process');
+      }
+    } catch (error) {
+      console.error('Error processing background locations:', error);
     }
   };
 

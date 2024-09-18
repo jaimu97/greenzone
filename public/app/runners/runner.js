@@ -12,7 +12,7 @@ addEventListener('trackLocation', async (resolve, reject, args) => {
 
     let locationsArr = [];
     try {
-      const { value } = CapacitorKV.get('LOCATIONS');
+      const { value } = await CapacitorKV.get('LOCATIONS');
       if (value) {
         locationsArr = JSON.parse(value);
         if (!Array.isArray(locationsArr)) {
@@ -23,9 +23,22 @@ addEventListener('trackLocation', async (resolve, reject, args) => {
       console.log('Error parsing existing locations:', e);
     }
 
-    locationsArr.push({ location: location.coords, time });
+    /* FIXME: Only storing time of reading not the location data.
+     *   [{"time":1726475120069},{"time":1726649775935},{"time":1726653491177}]
+     */
+    locationsArr.push({
+      location: {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        accuracy: location.coords.accuracy,
+        altitude: location.coords.altitude,
+        speed: location.coords.speed,
+        heading: location.coords.heading
+      },
+      time
+    });
 
-    CapacitorKV.set('LOCATIONS', JSON.stringify(locationsArr));
+    await CapacitorKV.set('LOCATIONS', JSON.stringify(locationsArr));
     console.log('Location saved, total locations:', locationsArr.length);
     resolve({ success: true, message: 'Location saved', count: locationsArr.length });
   } catch (err) {
@@ -36,10 +49,10 @@ addEventListener('trackLocation', async (resolve, reject, args) => {
 
 
 // Get a value from the Capacitor KV store
-addEventListener('loadLocations', (resolve, reject, args) => {
+addEventListener('loadLocations', async (resolve, reject, args) => {
   try {
     console.log('loadLocations event fired');
-    const { value } = CapacitorKV.get('LOCATIONS');
+    const { value } = await CapacitorKV.get('LOCATIONS');
     console.log('Retrieved value:', value);
 
     let locationsArr = [];
@@ -50,6 +63,7 @@ addEventListener('loadLocations', (resolve, reject, args) => {
       }
     }
 
+    console.log('Parsed locations:', JSON.stringify(locationsArr));
     resolve({ success: true, locations: locationsArr });
   } catch (err) {
     console.error('Error in loadLocations:', err);
