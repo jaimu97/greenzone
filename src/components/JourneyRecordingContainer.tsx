@@ -22,13 +22,16 @@ interface JourneyRecordingProps {
   user: any;
 }
 
-interface LocationItem { // FIXME: TIME OF CAPTURE NEEDED
+interface LocationItem {
   location: {
-    coords: {
-      latitude: number;
-      longitude: number;
-    }
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    altitude?: number;
+    speed?: number;
+    heading?: number;
   };
+  time: number;
 }
 
 /* BackgroundRunner.dispatchEvent() doesn't have any fucking typescript definitions, so I kept getting
@@ -48,13 +51,6 @@ interface LocationItem { // FIXME: TIME OF CAPTURE NEEDED
  *   }
  * ]
  */
-interface TrackLocationResult {
-  success: boolean;
-  message?: string;
-  count?: number;
-  error?: string;
-}
-
 interface LoadLocationsResult {
   success: boolean;
   locations?: Array<{
@@ -113,11 +109,12 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
 
   // useEffect hook for component lifecycle management, basically function runs after the component is added to the DOM
   useEffect(() => {
-    checkPermissions();
-    startJourney();
-    let watchId: string;
+  checkPermissions();
+  startJourney();
+  processBackgroundLocations();
+  let watchId: string;
 
-    const startWatching = async () => {
+  const startWatching = async () => {
       watchId = await Geolocation.watchPosition({ enableHighAccuracy: true }, (position, err) => {
         if (err) {
           setErrorMessage(`Failed to get location: ${err.message}`);
@@ -131,19 +128,18 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
 
     startWatching();
 
-    // cleanup function runs when the component will unmount (be removed from the DOM)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // cleanup function runs when the component will unmount (be removed from the DOM
     return () => {
       if (watchId) {
         Geolocation.clearWatch({ id: watchId });
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []); // Empty dependency array means this effect runs once on mount
 
-  /* FIXME: Super jank implementation, the user needs to unlock their device and press the "Load Background Locations"
-   *   button for the app to load what was captured in the background. Seems that background execution is
-   *   under system restrictions for what I can actually do with the information captured... :(
-   */
-  const loadLocations = async () => {
+  const loadLocations = async (): Promise<LocationItem[]> => {
     try {
       console.log('Attempting to load locations');
       const result = await BackgroundRunner.dispatchEvent({
@@ -155,32 +151,48 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
       console.log('Load locations result:', result);
       if (result.success && result.locations) {
         console.log('Loaded locations:', result.locations);
-        // TODO: Leaflet shit here.
+        return result.locations;
       } else {
         console.error('Failed to load locations:', result.error);
+        return [];
       }
     } catch (err) {
       console.error('Failed to load locations:', err);
+      return [];
     }
   };
 
-  const DEBUGTriggerBackgroundTask = async () => {
-    try {
-      console.log('Attempting to trigger background task');
-      const result = await BackgroundRunner.dispatchEvent({
-        label: 'com.greenzone.locationtracking',
-        event: 'trackLocation',
-        details: {},
-      }) as TrackLocationResult;
+  const processBackgroundLocations = async () => {
+    const backgroundLocations = await loadLocations();
+    if (backgroundLocations.length > 0) {
+      const newPositions = backgroundLocations.map(item => [
+        item.location.latitude,
+        item.location.longitude
+      ] as [number, number]);
 
-      console.log('Background task result:', result);
-      if (result.success) {
-        console.log(`Location saved. Total locations: ${result.count}`);
-      } else {
-        console.error('Failed to save location:', result.error);
-      }
-    } catch (err) {
-      console.error('Failed to trigger background task:', err);
+      setPositions(prevPositions => [...prevPositions, ...newPositions]);
+
+      // Save to localtorage
+      let journeyData = JSON.parse(localStorage.getItem('currentJourney') || '[]');
+      const newJourneyData = backgroundLocations.map(item => ({
+        location: `POINT(${item.location.longitude} ${item.location.latitude})`,
+        timestamp: item.time,
+      }));
+      journeyData = [...journeyData, ...newJourneyData];
+      localStorage.setItem('currentJourney', JSON.stringify(journeyData));
+
+      // Clear background runner's cache
+      await BackgroundRunner.dispatchEvent({
+        label: 'com.greenzone.locationtracking',
+        event: 'clearLocations',
+        details: {},
+      });
+    }
+  };
+
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      processBackgroundLocations();
     }
   };
 
@@ -297,8 +309,6 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
           </IonText>
         </IonCardContent>
       </IonCard>
-      <IonButton expand="block" onClick={loadLocations}>Load Background Locations</IonButton>
-      <IonButton expand="block" onClick={DEBUGTriggerBackgroundTask}>DEBUG: triggerBackgroundTask</IonButton>
       <IonButton expand="block" color="danger" onClick={handleEndJourney}>
         End Journey
       </IonButton>

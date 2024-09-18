@@ -56,3 +56,16 @@ addEventListener('loadLocations', (resolve, reject, args) => {
     reject({ success: false, error: err.toString() });
   }
 });
+
+// Clear all locations from the Capacitor KV store
+addEventListener('clearLocations', async (resolve, reject, args) => {
+  try {
+    console.log('clearLocations event fired');
+    await CapacitorKV.remove('LOCATIONS');
+    console.log('Locations cleared');
+    resolve({ success: true, message: 'Locations cleared' });
+  } catch (err) {
+    console.error('Error in clearLocations:', err);
+    reject({ success: false, error: err.toString() });
+  }
+});
