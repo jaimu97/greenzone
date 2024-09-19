@@ -146,7 +146,7 @@ const AccountTab: React.FC<TabProps> = ({ user }) => {
                   <IonItem>
                     <IonLabel>
                       <h2>User Type</h2>
-                      <p>{profile?.User_Type || 'N/A'}</p>
+                      <p>{profile?.user_type || 'N/A'}</p>
                     </IonLabel>
                   </IonItem>
                   <IonItem>

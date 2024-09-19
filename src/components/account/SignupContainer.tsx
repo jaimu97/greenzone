@@ -62,7 +62,7 @@ const SignupContainer: React.FC = () => {
           first_name: firstName,
           surname,
           full_name: fullname,
-          User_Type: typeOfUser
+          user_type: typeOfUser
         })
         .eq('id', data.user.id);
 
