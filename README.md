@@ -41,6 +41,7 @@ Once that is installed, you *should* be able to run this:
 ```
 ionic cap add android 
 ionic cap copy
+ionic cap sync
 ```
 
 in the same directory as where you 
@@ -88,8 +89,15 @@ Any other problems, see ionic's documentation
 
 ## iOS:
 
-**No.**
-
 Please don't add the `ios` capacitor, or it'll break building the android project since the `ionic cap copy` command tries
 to build for both at the same time. If you're not on a Mac with Xcode installed, this will error out and leave you with 
 an incomplete project.
+
+Also, many capacitor plugins such as location, camera and the background runner will return with:
+
+```
+{"code" : "UNIMPLEMENTED"}
+```
+
+I'm unsure why this is the case as the documentation for capacitors we use specifically have sections for iOS.
+Either way, the app if it does build will be functionally incomplete in comparison to Android.
