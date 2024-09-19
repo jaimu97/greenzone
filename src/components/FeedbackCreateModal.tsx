@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   IonButton,
   IonContent,
@@ -23,6 +23,29 @@ interface FeedbackModalProps {
 const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId, journeyId }) => {
   const [feedback, setFeedback] = useState('');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLIonTextareaElement>(null);
+
+  useEffect(() => {
+    const savedFeedback = localStorage.getItem('tempFeedback');
+    if (savedFeedback) {
+      setFeedback(savedFeedback);
+    }
+  }, []);
+
+  // FIXME: Bad hack, stores feedback in localstorage so it doesn't accidentally get removed when the component updates.
+  useEffect(() => {
+    localStorage.setItem('tempFeedback', feedback);
+  }, [feedback]);
+
+  useEffect(() => {
+    if (isOpen && textareaRef.current) {
+      textareaRef.current.value = feedback;
+    }
+  }, [isOpen, feedback]);
+
+  const handleFeedbackChange = (e: CustomEvent) => {
+    setFeedback(e.detail.value!);
+  };
 
   const takePhoto = async () => {
     try {
@@ -76,12 +99,16 @@ const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, us
           <IonTitle>Add Feedback</IonTitle>
         </IonToolbar>
       </IonHeader>
+      {/* FIXME: Modal will delete any text if the textbox scrolls off the screen.
+        *   useEffect is the solution I can think of, however, I had some problems with it 'glitching' and overwriting
+        *   text that had been entered due to it not updating every time a letter is added.
+        */}
       <IonContent className="ion-padding">
         <IonItem>
           <IonLabel position="stacked">Your Feedback</IonLabel>
           <IonTextarea
-            value={feedback}
-            onIonChange={e => setFeedback(e.detail.value!)}
+            ref={textareaRef}
+            onIonChange={handleFeedbackChange}
             placeholder="Enter your feedback here..."
             rows={6}
           />
