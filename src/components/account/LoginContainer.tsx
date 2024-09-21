@@ -11,6 +11,7 @@ import {
 } from '@ionic/react';
 import { lockClosedOutline, personOutline } from "ionicons/icons";
 import { supabase } from '../../supabaseClient';
+import { useHistory } from 'react-router-dom';
 import './LoginContainer.css';
 
 const LoginContainer: React.FC = () => {
@@ -18,6 +19,7 @@ const LoginContainer: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showLoading, setShowLoading] = useState(false);
   const [showToast, setShowToast] = useState<string | undefined>(undefined); // True = string or False = undefined
+  const history = useHistory();
 
   const handleLoginClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Just stops form from being cleared when bad information is entered
@@ -36,7 +38,8 @@ const LoginContainer: React.FC = () => {
       if (error) {
         setShowToast(error.message);
       } else if (data?.user) {
-        // Login successful, don't need to do anything as App.tsx will handle the state change
+        // Redirect to /tabs/home based on feedback from Cat/Mark
+        history.push('/tabs/home');
       } else {
         setShowToast('Oops! Something went wrong. Check the console.');
         console.error('Unexpected response:', data);
