@@ -11,7 +11,7 @@ const LeafletContainer: React.FC = () => {
   const warmZone = { color: 'orange' }
   const coolZone = { color: 'green' }
 
-  const greenZone1 = [
+  const greenZone1: [number, number][] = [
     [-12.354480884842488, 130.88162899017337],
     [-12.354480884842488, 130.88143050670627],
     [-12.354381321177707, 130.88142514228824],
@@ -33,7 +33,7 @@ const LeafletContainer: React.FC = () => {
     [-12.354271277083066, 130.88162899017337],
   ]
 
-  const greenZone2 = [
+  const greenZone2: [number, number][] = [
     [-12.354451365226064, 130.88564693927768],
     [-12.354451365226064, 130.8835601806641],
     [-12.353983066139628, 130.8835601806641],
@@ -42,7 +42,7 @@ const LeafletContainer: React.FC = () => {
     [-12.354058350555104, 130.88564693927768],
   ]
 
-  const greenZone3 = [
+  const greenZone3: [number, number][] = [
     [-12.354314159428543, 130.88166117668155],
     [-12.354314159428543, 130.88278234004977],
     [-12.354470404458517, 130.88278234004977],
