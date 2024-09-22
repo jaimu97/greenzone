@@ -73,7 +73,7 @@ const HomeContainer: React.FC<HomeContainerProps> = ({ user }) => {
           <IonRow>
             <IonCol size="12" size-md="6">
               <IonCard className="feedback-card">
-                <img src="../../img/IMG_20160809_164508.jpg" alt="Feedback"/>
+                <img src="https://supabase.epicminecraft.xyz/storage/v1/object/public/static-images/IMG_20160809_164508.jpg" alt="Feedback"/>
                 <IonCardHeader>
                   <IonCardTitle>Share Your Journey</IonCardTitle>
                 </IonCardHeader>
@@ -87,7 +87,7 @@ const HomeContainer: React.FC<HomeContainerProps> = ({ user }) => {
             </IonCol>
             <IonCol size="12" size-md="6">
               <IonCard className="welcome-card">
-                <img src="../../img/PXL_20240806_084907679.jpg" alt="Green Zone"/>
+                <img src="https://supabase.epicminecraft.xyz/storage/v1/object/public/static-images/PXL_20240806_084907679.jpg" alt="Green Zone"/>
                 <IonCardHeader>
                   <IonCardTitle>Discover Green Zones</IonCardTitle>
                 </IonCardHeader>
