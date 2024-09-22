@@ -9,7 +9,7 @@ import {
   IonLoading,
   IonIcon
 } from '@ionic/react';
-import { lockClosedOutline, personOutline } from "ionicons/icons";
+import { lockClosedOutline, personOutline } from 'ionicons/icons';
 import { supabase } from '../../supabaseClient';
 import { useHistory } from 'react-router-dom';
 import './LoginContainer.css';
@@ -23,17 +23,21 @@ const LoginContainer: React.FC = () => {
 
   const handleLoginClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Just stops form from being cleared when bad information is entered
-    setShowLoading(true); // For slow internet users, show them something to let them know their account has been sent.
 
-    if (!email || !password) {
+    // Re-check the values right before validation, should fix the "Please enter x" message when forms are filled.
+    const currentEmail = email.trim();
+    const currentPassword = password.trim();
+
+    if (!currentEmail || !currentPassword) {
       setShowToast('Please enter both email and password');
-      setShowLoading(false);
       return;
     }
 
+    setShowLoading(true); // For slow internet users, show them something to let them know their account has been sent.
+
     // Attempt to sign in user with Supabase
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: currentEmail, password: currentPassword });
 
       if (error) {
         setShowToast(error.message);
@@ -64,9 +68,11 @@ const LoginContainer: React.FC = () => {
           <IonIcon icon={personOutline} slot="start" />
           <IonInput
             label="Email"
-            placeholder=""
+            type="email"
+            placeholder="test@test.com"
             value={email}
             onIonChange={(e) => setEmail(e.detail.value!)}
+            required
           />
         </IonItem>
         <IonItem>
@@ -75,7 +81,8 @@ const LoginContainer: React.FC = () => {
             label="Password"
             type="password"
             value={password}
-            onIonChange={(e) => setPassword(e.detail.value || '')}
+            onIonChange={(e) => setPassword(e.detail.value!)}
+            required
           />
         </IonItem>
       </IonList>
