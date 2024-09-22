@@ -16,6 +16,7 @@ import {
   IonRow,
   IonAlert,
   IonSpinner,
+  isPlatform,
 } from '@ionic/react';
 import './JourneyPage.css';
 import JourneyRecording from '../components/JourneyRecordingContainer';
@@ -574,6 +575,13 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
     );
   }
 
+  const showRecordJourney = () => {
+    return isPlatform('ios') || isPlatform('android');
+  };
+
+  const showUploadKestrel = () => { // Basically just NOT mobile.
+    return !showRecordJourney();
+  };
 
   return (
     <IonPage>
@@ -584,26 +592,33 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
       </IonHeader>
       <IonContent fullscreen>
         <div className="ion-padding">
-          {isRecording ? (
-            <JourneyRecording onEndJourney={endJourney} user={user}/>
-          ) : (
+          {!isRecording && (
             <>
               <div className="ion-text-center home-container">
                 <IonText className="ion-margin-bottom">
                   <h1 className="bigtext">JOURNEYS</h1>
                 </IonText>
               </div>
-              <IonText>
-                <h2>Record a Journey</h2>
-              </IonText>
-              <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
 
-              <IonText>
-                <h2>Upload Kestrel Data</h2>
-              </IonText>
-              <IonButton expand="block" size="large" onClick={() => setIsUploadModalOpen(true)}>
-                Upload Kestrel Data
-              </IonButton>
+              {showRecordJourney() && (
+                <>
+                  <IonText>
+                    <h2>Record a Journey</h2>
+                  </IonText>
+                  <IonButton expand="block" size="large" onClick={startJourney}>Start Journey</IonButton>
+                </>
+              )}
+
+              {showUploadKestrel() && (
+                <>
+                  <IonText>
+                    <h2>Upload Kestrel Data</h2>
+                  </IonText>
+                  <IonButton expand="block" size="large" onClick={() => setIsUploadModalOpen(true)}>
+                    Upload Kestrel Data
+                  </IonButton>
+                </>
+              )}
 
               <IonText>
                 <h2>Previous Journeys</h2>
