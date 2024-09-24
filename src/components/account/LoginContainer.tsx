@@ -21,14 +21,16 @@ const LoginContainer: React.FC = () => {
   const [showToast, setShowToast] = useState<string | undefined>(undefined); // True = string or False = undefined
   const history = useHistory();
 
+  /* https://forum.ionicframework.com/t/ioninput-doesnt-update-state-after-upgrading-to-v7/235763
+   * Breaking change in Ionic v7 made it so older tutorials recommending onIonChange were causing login issues because
+   * components don't fire until the input loses focus (clicking the login button). So when clicking, the latest values
+   * were not being updated in the state and causing the "Please enter both email and password" to appear and requiring
+   * two presses to log in.
+   */
   const handleLoginClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Just stops form from being cleared when bad information is entered
 
-    // Re-check the values right before validation, should fix the "Please enter x" message when forms are filled.
-    const currentEmail = email.trim();
-    const currentPassword = password.trim();
-
-    if (!currentEmail || !currentPassword) {
+    if (!email || !password) {
       setShowToast('Please enter both email and password');
       return;
     }
@@ -37,7 +39,7 @@ const LoginContainer: React.FC = () => {
 
     // Attempt to sign in user with Supabase
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: currentEmail, password: currentPassword });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         setShowToast(error.message);
@@ -71,7 +73,7 @@ const LoginContainer: React.FC = () => {
             type="email"
             placeholder="test@test.com"
             value={email}
-            onIonChange={(e) => setEmail(e.detail.value!)}
+            onIonInput={(e) => setEmail(e.detail.value!)}
             required
           />
         </IonItem>
@@ -81,7 +83,7 @@ const LoginContainer: React.FC = () => {
             label="Password"
             type="password"
             value={password}
-            onIonChange={(e) => setPassword(e.detail.value!)}
+            onIonInput={(e) => setPassword(e.detail.value || '')}
             required
           />
         </IonItem>
