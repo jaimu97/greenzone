@@ -108,7 +108,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
             label="Username"
             placeholder="Enter username"
             value={username}
-            onIonChange={(e) => setUsername(e.detail.value!)}
+            onIonInput={(e) => setUsername(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -117,7 +117,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
             label="First Name"
             placeholder="Enter first name"
             value={firstName}
-            onIonChange={(e) => setFirstName(e.detail.value!)}
+            onIonInput={(e) => setFirstName(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -126,7 +126,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
             label="Surname"
             placeholder="Enter surname"
             value={surname}
-            onIonChange={(e) => setSurname(e.detail.value!)}
+            onIonInput={(e) => setSurname(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -135,7 +135,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
             label="Type of User"
             placeholder="Select"
             value={typeOfUser}
-            onIonChange={(e) => setTypeOfUser(e.detail.value!)}
+            onIonInput={(e) => setTypeOfUser(e.detail.value!)}
           >
             <IonSelectOption value="Patient">Patient</IonSelectOption>
             <IonSelectOption value="Staff">Staff</IonSelectOption>
@@ -149,7 +149,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
             type="password"
             placeholder="Enter password"
             value={password}
-            onIonChange={(e) => setPassword(e.detail.value!)}
+            onIonInput={(e) => setPassword(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -159,7 +159,7 @@ const EditProfileContainer: React.FC<EditProfileContainerProps> = ({ user, onPro
             type="password"
             placeholder="Re-enter password"
             value={verify}
-            onIonChange={(e) => setVerify(e.detail.value!)}
+            onIonInput={(e) => setVerify(e.detail.value!)}
           />
         </IonItem>
       </IonList>

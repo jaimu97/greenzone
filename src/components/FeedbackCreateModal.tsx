@@ -122,7 +122,7 @@ const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, us
             <IonLabel position="stacked">Your Feedback</IonLabel>
             <IonTextarea
               ref={textareaRef}
-              onIonChange={handleFeedbackChange}
+              onIonInput={handleFeedbackChange}
               placeholder="Enter your feedback here..."
               rows={6}
             />

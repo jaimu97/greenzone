@@ -91,7 +91,7 @@ const SignupContainer: React.FC = () => {
             label="Email"
             placeholder=""
             value={email}
-            onIonChange={(e) => setEmail(e.detail.value!)}
+            onIonInput={(e) => setEmail(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -100,7 +100,7 @@ const SignupContainer: React.FC = () => {
             label="Username"
             placeholder=""
             value={username}
-            onIonChange={(e) => setUsername(e.detail.value!)}
+            onIonInput={(e) => setUsername(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -109,7 +109,7 @@ const SignupContainer: React.FC = () => {
             label="First Name"
             placeholder=""
             value={firstName}
-            onIonChange={(e) => setFirstName(e.detail.value!)}
+            onIonInput={(e) => setFirstName(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -118,7 +118,7 @@ const SignupContainer: React.FC = () => {
             label="Surname"
             placeholder=""
             value={surname}
-            onIonChange={(e) => setSurname(e.detail.value!)}
+            onIonInput={(e) => setSurname(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -126,7 +126,7 @@ const SignupContainer: React.FC = () => {
           <IonSelect 
             label="Type of User" 
             placeholder="Select"
-            onIonChange={(e) => 
+            onIonChange={(e) => /* Cannot change this to onIonInput */
               setTypeOfUser(e.detail.value!)
             }
           >
@@ -142,7 +142,7 @@ const SignupContainer: React.FC = () => {
             type="password"
             placeholder=""
             value={password}
-            onIonChange={(e) => setPassword(e.detail.value!)}
+            onIonInput={(e) => setPassword(e.detail.value!)}
           />
         </IonItem>
         <IonItem>
@@ -152,7 +152,7 @@ const SignupContainer: React.FC = () => {
             type="password"
             placeholder=""
             value={verify}
-            onIonChange={(e) => setVerify(e.detail.value!)}
+            onIonInput={(e) => setVerify(e.detail.value!)}
           />
         </IonItem>
       </IonList>
