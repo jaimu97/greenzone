@@ -10,7 +10,6 @@ import {
   IonItem,
   IonLabel,
   IonImg,
-  IonToast
 } from '@ionic/react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
@@ -19,13 +18,13 @@ interface FeedbackModalProps {
   onClose: () => void;
   userId: string;
   journeyId: number | null;
+  onFeedbackSubmitted: () => void;
 }
 
-const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId, journeyId }) => {
+const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId, journeyId, onFeedbackSubmitted }) => {
   const [feedback, setFeedback] = useState('');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLIonTextareaElement>(null);
-  const [showToast, setShowToast] = useState(false); // Feedback from Mark, needs toast to say feedback was recorded.
 
   useEffect(() => {
     const savedFeedback = localStorage.getItem('tempFeedback');
@@ -88,13 +87,8 @@ const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, us
       localStorage.setItem('journeyFeedback', JSON.stringify(existingFeedback));
 
       console.log('Feedback stored locally:', feedbackData);
-      setShowToast(true);
-      /* FIXME: Delays modal closing by 1.5 seconds to display this toast. Should be showing the toast in the parent
-       *   `JourneyRecordingContainer.tsx`. Will do once testing is complete, needed this implemented ASAP.
-       */
-      setTimeout(() => {
-        clearFeedbackAndClose();
-      }, 1500);
+      onFeedbackSubmitted(); // tell journey recorder we submitted feedback to show the toast that it's been recorded
+      clearFeedbackAndClose();
     }
   };
 
@@ -113,10 +107,6 @@ const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, us
             <IonTitle>Add Feedback</IonTitle>
           </IonToolbar>
         </IonHeader>
-        {/* FIXME: Modal will delete any text if the textbox scrolls off the screen.
-          *   useEffect is the solution I can think of, however, I had some problems with it 'glitching' and overwriting
-          *   text that had been entered due to it not updating every time a letter is added.
-          */}
         <IonContent className="ion-padding">
           <IonItem>
             <IonLabel position="stacked">Your Feedback</IonLabel>
@@ -141,13 +131,6 @@ const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, us
           </IonButton>
         </IonContent>
       </IonModal>
-      <IonToast
-        isOpen={showToast}
-        onDidDismiss={() => setShowToast(false)}
-        message="Feedback recorded!"
-        duration={1500}
-        position="bottom"
-      />
     </>
   );
 };

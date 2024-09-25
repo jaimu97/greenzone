@@ -10,6 +10,7 @@ import {
   IonRow,
   IonText,
   IonAlert,
+  IonToast,
 } from '@ionic/react';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import JourneyMap from './JourneyMap';
@@ -31,6 +32,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
   const [journeyStartTime, setJourneyStartTime] = useState<number | null>(null);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false); // feedback modal
   const [journeyId, setJourneyId] = useState<number | null>(null);
+  const [showFeedbackToast, setShowFeedbackToast] = useState(false);
 
   /* This approach to lifecycle management using useEffect is more 'flexible' than the older class-based lifecycle
    * methods I've seen online.
@@ -159,6 +161,10 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
     }
   };
 
+  const handleFeedbackSubmitted = () => {
+    setShowFeedbackToast(true);
+  };
+
   return (
     <>
       <IonText>
@@ -218,6 +224,14 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
         onClose={() => setIsFeedbackModalOpen(false)}
         userId={user.id}
         journeyId={journeyId}
+        onFeedbackSubmitted={handleFeedbackSubmitted} // callback toast on the recording container
+      />
+      <IonToast
+        isOpen={showFeedbackToast}
+        onDidDismiss={() => setShowFeedbackToast(false)}
+        message="Feedback recorded!"
+        duration={1500}
+        position="bottom"
       />
     </>
   );
