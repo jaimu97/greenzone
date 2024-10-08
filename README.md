@@ -38,7 +38,7 @@ npm install @capacitor/android
 
 Once that is installed, you *should* be able to run this:
 
-```
+```bash
 ionic cap add android 
 ionic cap copy
 ionic cap sync
@@ -51,7 +51,7 @@ This will make an Android Studio project for you to use and then 'compile' the p
 
 Next, run:
 
-```
+```bash
 ionic cap open android
 ```
 
@@ -89,15 +89,45 @@ Any other problems, see ionic's documentation
 
 ## iOS:
 
-Please don't add the `ios` capacitor, or it'll break building the android project since the `ionic cap copy` command tries
-to build for both at the same time. If you're not on a Mac with Xcode installed, this will error out and leave you with 
-an incomplete project.
+iOS works more or less the same as Android. Install the iOS capacitor and Xcode:
 
-Also, many capacitor plugins such as location, camera and the background runner will return with:
-
-```
-{"code" : "UNIMPLEMENTED"}
+```bash
+npm install @capacitor/ios
 ```
 
-I'm unsure why this is the case as the documentation for capacitors we use specifically have sections for iOS.
-Either way, the app if it does build will be functionally incomplete in comparison to Android.
+[Xcode App Store Link](https://apps.apple.com/au/app/xcode/id497799835?mt=12)
+
+Once that is installed, like Android, run this:
+
+```bash
+ionic cap add ios 
+ionic cap copy
+ionic cap sync
+```
+
+Then open with:
+
+```bash
+ionic cap open ios
+```
+
+The app will *(probably)* build as-is once Xcode opens, however, things like the camera, camera roll, GPS and so on will
+not until you set its permissions in the `info.plist`. To do this, on the left-hand panel, under the app directory,
+go to `App -> App -> Info` and add the following items:
+
+```
+Privacy - Camera Usage Description
+Privacy - Photo Library Additions Usage Description
+Privacy - Photo Library Usage Description
+Privacy - Location When In Use Usage Description
+```
+
+The `type` should automatically be set as `string` and the `value` column can remain empty.
+
+### Possible Build Errors:
+
+You will get errors on build, this is because the package name `io.ionic.starter` is not available. This error can
+be ignored if you are not deploying the app on a real device.
+
+If you do plan on building on a real device, set this to something like `ionic.greenzone.testflight`.
+Double-check with your Apple developer account to see if there's restrictions on the naming scheme or required sections.
