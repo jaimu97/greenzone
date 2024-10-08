@@ -91,7 +91,7 @@ const HomeContainer: React.FC<HomeContainerProps> = ({ user }) => {
                   <p>
                     The gardens feature traditional Larrakia plants and bush tucker, emphasising their medicinal,
                     culinary, and practical applications. Exploring these areas allows you to engage with the
-                    environment, learn about native flora, and understand their importance in Indigenous culture.
+                    environment, learn about native flora, and understand their importance in First Nation culture.
                   </p>
                 </IonCardContent>
               </IonCard>
