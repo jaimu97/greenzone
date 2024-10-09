@@ -59,7 +59,7 @@ const JourneyRecordingContainer: React.FC<JourneyRecordingProps> = ({ onEndJourn
    * components is equivalent to calling useEffect in function components. In the rare cases where it’s important for
    * the code to run before browser paint, useLayoutEffect is a closer match."
    *
-   * OR TL;DR, this useEffect is like a Swiss Army knife for managing when shit happens, it sets things up, keeps an
+   * OR TL;DR, this useEffect is like a Swiss Army knife for managing when stuff happens, it sets things up, keeps an
    * eye on changes, and cleans up after itself when it's done
    */
 

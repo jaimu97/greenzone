@@ -3,7 +3,7 @@ import { IonButton, IonContent, IonHeader, IonModal, IonTitle, IonToolbar, IonTe
 import Papa from 'papaparse';
 import { supabase } from '../supabaseClient';
 
-/* Uses the "Papa Parse" library since I couldn't be fucked writing my own, and they seem to do it way better.
+/* Uses the "Papa Parse" library since I couldn't be bothered writing my own, and they seem to do it way better.
  * https://www.papaparse.com/
  */
 

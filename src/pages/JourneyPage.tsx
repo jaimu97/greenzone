@@ -200,7 +200,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
         duration: 0,
         positions: [],
         isCorrupted: true
-      }; // fucked journey
+      }; // corrupted journey
     }
 
     return {
