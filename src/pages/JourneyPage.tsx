@@ -74,7 +74,6 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
    * This is for searching users and seeing their journeys as a "Staff" member. Really, this should be limited to
    * a new role such as "Admin" but since there's no way to enter yourself as one without going into Supabase,
    * "Staff" is probably good enough for now.
-   * TODO: Document in the README.md that "Staff" role members can see all journeys.
    */
   const [userProfile, setUserProfile] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -590,6 +589,7 @@ const JourneyPage: React.FC<JourneyPageProps> = ({ user }) => {
                             Delete
                           </IonButton>
                         </IonCol>
+                        {/* FIXME: Upload button shows when viewing other user's journeys. */}
                         {isLocal && !journey.isCorrupted && (
                           <IonCol size="6">
                             <IonButton
