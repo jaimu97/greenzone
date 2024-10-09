@@ -113,7 +113,7 @@ const FeedbackCreateModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, us
             <IonTextarea
               ref={textareaRef}
               onIonInput={handleFeedbackChange}
-              placeholder="Enter your feedback here..."
+              placeholder="Enter your feedback here. Feedback can be anything you experience in the zone, good or bad to help reseachers. For example: The acacia trees are in bloom! (Don't forget to attach a photo too!)"
               rows={6}
             />
           </IonItem>
