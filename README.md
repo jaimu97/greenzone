@@ -126,8 +126,13 @@ The `type` should automatically be set as `string` and the `value` column can re
 
 ### Possible Build Errors:
 
-You will get errors on build, this is because the package name `io.ionic.starter` is not available. This error can
-be ignored if you are not deploying the app on a real device.
+You will get errors on initial build after running `cap add` for the first time, this is because the package name 
+`io.ionic.starter` is not available. This error can be ignored if you are not deploying the app on a real device.
+
+There maybe some errors related to "Pods" when building. Error looks like `./Pods/Pods...xcconfig unable to open file`
+if you see this, you're probably missing [CocoaPods](https://cocoapods.org/). My recommendation is to install it through
+homebrew instead with `brew install cocoapods`. Once this is installed, delete the `./ios` directory and try run
+`ionic cap add ios; ionic cap copy; ionic cap sync` again.
 
 If you do plan on building on a real device, set this to something like `ionic.greenzone.testflight`.
 Double-check with your Apple developer account to see if there's restrictions on the naming scheme or required sections.
