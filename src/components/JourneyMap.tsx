@@ -1,8 +1,26 @@
-// JourneyMap.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap, Marker } from 'react-leaflet';
 import { useIonViewDidEnter } from '@ionic/react';
 import 'leaflet/dist/leaflet.css';
+
+/* Stupid fix for Android/iOS showing Leaflet's icons as a broken image:
+ * https://stackoverflow.com/questions/47723812/custom-marker-icon-with-react-leaflet
+ */
+import L from 'leaflet';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+const DefaultIcon = L.icon({
+    iconUrl,
+    iconRetinaUrl,
+    shadowUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    tooltipAnchor: [16, -28],
+    shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface JourneyMapProps {
   positions: [number, number][];
@@ -51,6 +69,7 @@ const JourneyMap: React.FC<JourneyMapProps> = ({ positions, centre }) => {
 
   return (
     <MapContainer
+
       key={key}
       center={mapCentre}
       zoom={16}

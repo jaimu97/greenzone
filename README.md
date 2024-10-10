@@ -1,5 +1,12 @@
 # Green Zone
 
+## Notes:
+
+### Please read this section carefully as items here may need changes before deploying to users!
+
+- Users that select 'staff' as their role when signing up are able to search journeys from all users and can delete any
+user's journeys.
+
 ## Setup:
 
 Download node.js and npm. I'm on a Mac, so you're gonna need to figure that out yourself, unfortunately. 
