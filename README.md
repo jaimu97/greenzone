@@ -4,29 +4,32 @@
 
 Download node.js and npm. I'm on a Mac, so you're gonna need to figure that out yourself, unfortunately. 
 
-See [here](https://nodejs.org/en) for the node,js website.
+See [here](https://nodejs.org/en) for the node.js website with install instructions.
 
-Once you have node.js and npm installed, create a folder and install ionic inside of it.
-
-You should be able to run the following commands:
-
-```bash
-npm install -g @ionic/cli
-npm install @supabase/supabase-js
-```
-
-Here's a [link](https://ionicframework.com/docs/intro/cli) to their setup guide.
-
-Once ionic is installed, clone this repo into the folder where ionic is as a subdirectory.
+Once you have node.js and npm installed, clone this repository onto your machine and `cd` into it.
 
 For example:
 
-If you're project folder is called `ionic` then you clone this project inside of it like this:
+```bash
+git clone git@github.com:jaimu97/greenzone.git
+cd greenzone
+```
 
-`ionic/greenzone`
+Then install all the dependences with:
 
-Then, you should be able to `cd` into the folder and run `ionic serve` and it'll start a localhost server that you can 
-access. Changes made will automatically update on the page it opens. 
+```bash
+npm install
+```
+
+This command should install everything needed including `ionic`.
+
+Once ionic is installed, you should be able to run:
+
+```bash
+ionic serve
+```
+
+This starts a localhost server that you can access. Changes made will automatically update on the page it opens. 
 
 ## Android:
 
@@ -110,6 +113,8 @@ Then open with:
 ```bash
 ionic cap open ios
 ```
+
+### !! IMPORTANT !!
 
 The app will *(probably)* build as-is once Xcode opens, however, things like the camera, camera roll, GPS and so on will
 not until you set its permissions in the `info.plist`. To do this, on the left-hand panel, under the app directory,
